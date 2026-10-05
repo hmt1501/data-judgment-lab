@@ -1,0 +1,100 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgb(10 20 14 / 45%);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh var(--sp-4) var(--sp-4);
+}
+
+.dialog {
+  width: min(640px, 100%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: 0 var(--sp-4);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-subtle);
+}
+
+.inputRow input {
+  flex: 1;
+  min-width: 0;
+  height: 56px;
+  border: 0;
+  outline: 0;
+  background: none;
+  font-size: var(--fs-md);
+  color: var(--text);
+}
+
+.inputRow kbd {
+  font: 600 var(--fs-xs) var(--font-body);
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: var(--sp-2);
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.list li {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-3);
+  padding: var(--sp-3);
+  border-radius: var(--radius);
+  cursor: pointer;
+}
+
+.list li.active {
+  background: var(--brand-soft);
+}
+
+.glyph {
+  font-size: 20px;
+}
+
+.text {
+  flex: 1;
+  min-width: 0;
+}
+
+.text b,
+.text small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text small {
+  color: var(--text-muted);
+  font-size: var(--fs-xs);
+}
+
+.done {
+  color: var(--positive);
+  flex: none;
+}
+
+.list li.none {
+  cursor: default;
+  color: var(--text-muted);
+  justify-content: center;
+}

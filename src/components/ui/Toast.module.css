@@ -1,0 +1,35 @@
+.region {
+  position: fixed;
+  right: var(--sp-5);
+  bottom: var(--sp-5);
+  z-index: 50;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  max-width: min(420px, calc(100vw - 32px));
+  padding: var(--sp-3) var(--sp-4);
+  border-radius: var(--radius);
+  background: var(--text);
+  color: var(--bg);
+  font-size: var(--fs-sm);
+  box-shadow: var(--shadow-lg);
+  animation: rise 0.2s ease-out;
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(8px);
+    opacity: 0;
+  }
+}
+
+@media (max-width: 600px) {
+  .region {
+    left: var(--sp-4);
+    right: var(--sp-4);
+    bottom: var(--sp-4);
+  }
+}
