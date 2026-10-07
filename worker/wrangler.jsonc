@@ -9,7 +9,8 @@
     {
       "binding": "DB",
       "database_name": "data-judgment-lab",
-      "migrations_dir": "migrations"
+      "migrations_dir": "migrations",
+      "database_id": "166db355-9231-447e-abac-388b46b27af5"
     }
   ],
   "vars": {
