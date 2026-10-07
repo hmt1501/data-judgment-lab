@@ -8,7 +8,7 @@ export type Research = { notes: string; sources: Source[] }
 
 export class PipelineError extends Error {
   constructor(
-    readonly code: 'out_of_scope' | 'no_sources' | 'invalid_output',
+    readonly code: 'out_of_scope' | 'invalid_output',
     message: string,
   ) {
     super(message)
@@ -23,11 +23,14 @@ export const normalizeQuestion = (q: string) =>
 
 export async function compose(chat: Chat, model: string, question: string, r: Research): Promise<Composed> {
   const sourceList = r.sources.map((s, i) => `${i + 1}. ${s.title} — ${s.url}`).join('\n')
+  const material = r.sources.length
+    ? `TƯ LIỆU:\n${r.notes}\n\nDANH SÁCH NGUỒN:\n${sourceList}`
+    : 'TƯ LIỆU: (không tìm được tư liệu tra cứu)\n\nHãy trả lời bằng kiến thức chung: tập trung giải thích cơ chế, KHÔNG nêu số liệu, ngày tháng hay sự kiện cụ thể gần đây; trong counterpoints nêu rõ bài chưa được đối chiếu với nguồn tin mới. sourceIndexes để mảng rỗng.'
   const result = await chat({
     model,
     messages: [
       { role: 'system', content: COMPOSE_SYSTEM },
-      { role: 'user', content: `CÂU HỎI: ${question}\n\nGHI CHÚ NGHIÊN CỨU:\n${r.notes}\n\nDANH SÁCH NGUỒN:\n${sourceList}` },
+      { role: 'user', content: `CÂU HỎI: ${question}\n\n${material}` },
     ],
     response_format: { type: 'json_schema', json_schema: { name: 'explainer', strict: true, schema: COMPOSE_SCHEMA } },
     reasoning_effort: 'low',

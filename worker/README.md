@@ -10,13 +10,14 @@ GET  /api/health
 ```
 
 Luồng xử lý (≈ 6–8K token/câu, vừa giới hạn free tier 8K token/phút):
-1. **Tra cứu gọn** (`src/retrieve.ts`, không tốn token AI): 5 tin mới nhất từ Google News RSS + tóm tắt Wikipedia, cắt cứng còn ≤ 5.000 ký tự.
+1. **Tra cứu gọn** (`src/retrieve.ts`, không tốn token AI): 5 tin mới nhất (tiêu đề + tóm tắt) từ **Bing News RSS** (dự phòng: Google News RSS — Google chặn IP Cloudflare, trả 503) + tóm tắt Wikipedia, cắt cứng còn ≤ 5.000 ký tự.
    Không dùng `browser_search` của Groq: model tự mở nguyên trang web, đo thực tế 16K–112K token/câu.
+   Không tìm được tư liệu → vẫn soạn bài bằng kiến thức chung của AI, bài không có nguồn và giao diện hiện cảnh báo.
 2. **Biên soạn**: 1 lần gọi `gpt-oss-120b` với JSON schema strict; AI chỉ được chọn nguồn **theo số thứ tự** trong danh sách tra cứu (không tự viết URL). Kết quả kiểm tra bằng `validateExplainer` (dùng chung với frontend).
 
 Có cache câu hỏi, cache tư liệu 6 giờ, quota `DAILY_LIMIT` / `DAILY_LIMIT_PER_IP`, trả `429 + retry-after`, và log `groq_usage` (số token mỗi lần gọi) trong Workers Logs.
 
-Lưu ý: điều khoản Google News RSS chỉ cho phép dùng cá nhân, phi thương mại.
+Lưu ý: RSS của Bing News và Google News chỉ dành cho dùng cá nhân, phi thương mại.
 
 ## Cài đặt lần đầu (làm một lần)
 

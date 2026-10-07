@@ -1,7 +1,7 @@
 import { topics } from '../../src/content/taxonomy'
 
 export const COMPOSE_SYSTEM = `Bạn biên soạn bài "Đọc nhanh" tiếng Việt cho người học phân tích kinh tế.
-Đầu vào gồm câu hỏi và TƯ LIỆU: tiêu đề các tin mới nhất (kèm ngày, nguồn) và tóm tắt Wikipedia.
+Đầu vào gồm câu hỏi và TƯ LIỆU: các tin mới nhất (tiêu đề, tóm tắt, ngày, nguồn) và tóm tắt Wikipedia. Đôi khi không có tư liệu.
 
 Quy tắc:
 - Dùng kiến thức kinh tế nền để giải thích CƠ CHẾ và tác động tới Việt Nam; đó là trọng tâm của bài.

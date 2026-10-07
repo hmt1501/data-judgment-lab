@@ -24,6 +24,12 @@ describe('explainer soạn sẵn', () => {
 })
 
 describe('validateExplainer với dữ liệu xấu', () => {
+  it('bài AI được phép 0 nguồn (dự phòng khi không tra cứu được); bài soạn sẵn thì không', () => {
+    const [, good] = all[0]
+    expect(validateExplainer({ ...good, origin: 'ai', sources: [] })).toEqual([])
+    expect(validateExplainer({ ...good, sources: [] }).join('\n')).toMatch(/sources/)
+  })
+
   it('bắt lỗi cấu trúc', () => {
     expect(validateExplainer(null)).toEqual(['không phải object'])
     const [, good] = all[0]

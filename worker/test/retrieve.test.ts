@@ -29,11 +29,41 @@ describe('parseNewsRss', () => {
   it('lấy tiêu đề (bỏ đuôi " - nguồn"), link https, nguồn, ngày; giới hạn số tin', () => {
     const items = parseNewsRss(rss(9))
     expect(items).toHaveLength(LIMITS.news)
-    expect(items[0]).toEqual({ title: 'Tin số 0 & lạm phát', url: 'https://news.google.com/rss/articles/a0?oc=5', publisher: 'Báo 0', date: '2026-10-07' })
+    expect(items[0]).toEqual({ title: 'Tin số 0 & lạm phát', url: 'https://news.google.com/rss/articles/a0?oc=5', publisher: 'Báo 0', date: '2026-10-07', snippet: '' })
+  })
+})
+
+const bingRss = `<?xml version="1.0" encoding="utf-8" ?><rss version="2.0" xmlns:News="https://www.bing.com/news/search"><channel><title>Bing</title>
+<item><title>Thu nhập của Mixue, mỗi ng&#224;y l&#227;i h&#224;ng tỷ đồng</title><link>http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;aid=&amp;tid=x&amp;url=https%3a%2f%2fcafebiz.vn%2fthu-nhap-cua-mixue.chn&amp;c=1&amp;mkt=en-ww</link><description>Chỉ với một c&#226;y kem 10.000 đồng…</description><pubDate>Wed, 30 Sep 2026 02:05:00 GMT</pubDate><News:Source>CafeBiz</News:Source></item>
+<item><title>Tin không có link hợp lệ</title><link>http://www.bing.com/news/apiclick.aspx?ref=FexRss&amp;url=http%3a%2f%2finsecure.vn</link></item>
+</channel></rss>`
+
+describe('parseNewsRss (Bing)', () => {
+  it('lấy URL bài gốc từ link chuyển hướng của Bing, tóm tắt, nguồn; bỏ link không phải https', () => {
+    expect(parseNewsRss(bingRss)).toEqual([
+      {
+        title: 'Thu nhập của Mixue, mỗi ngày lãi hàng tỷ đồng',
+        url: 'https://cafebiz.vn/thu-nhap-cua-mixue.chn',
+        publisher: 'CafeBiz',
+        date: '2026-09-30',
+        snippet: 'Chỉ với một cây kem 10.000 đồng…',
+      },
+    ])
   })
 })
 
 describe('retrieve', () => {
+  it('ưu tiên Bing News; chỉ gọi Google khi Bing không có tin', async () => {
+    const both = fakeFetch({ 'https://www.bing.com/news/search': bingRss, 'https://news.google.com/rss/search': rss(3) })
+    const r = await retrieve('mixue', both, { wikiLangs: [] })
+    expect(r.sources.map((s) => s.url)).toEqual(['https://cafebiz.vn/thu-nhap-cua-mixue.chn'])
+    expect(r.notes).toContain('(CafeBiz): Chỉ với một cây kem')
+    expect(both.urls.some((u) => u.includes('news.google.com'))).toBe(false)
+
+    const bingDown = fakeFetch({ 'https://www.bing.com/news/search': null, 'https://news.google.com/rss/search': rss(2) })
+    expect((await retrieve('mixue', bingDown, { wikiLangs: [] })).sources).toHaveLength(2)
+  })
+
   it('ghép tin + Wikipedia thành ghi chú có giới hạn và danh sách nguồn thật', async () => {
     const f = fakeFetch({
       'https://news.google.com/rss/search': rss(3),

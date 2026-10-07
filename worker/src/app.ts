@@ -100,8 +100,10 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
       let r = await deps.store.getResearch(norm, RESEARCH_TTL_MS, now)
       if (!r) {
         r = await deps.retrieve(question)
-        if (!r.sources.length) throw new PipelineError('no_sources', 'Không tìm được tư liệu cho câu hỏi này. Hãy thử diễn đạt cụ thể hơn.')
-        await deps.store.putResearch(norm, r, now)
+        // không có tư liệu → AI vẫn trả lời bằng kiến thức chung (bài không có nguồn, giao diện cảnh báo).
+        // Chỉ cache khi có tư liệu để lần sau còn tra cứu lại.
+        if (r.sources.length) await deps.store.putResearch(norm, r, now)
+        else console.log(JSON.stringify({ event: 'no_sources_fallback', question }))
       }
       const composed = await compose(deps.chat, config.model, question, r)
       const explainer = toExplainer(composed, r, { question, model: config.model, today: day, suffix: deps.randomSuffix() })

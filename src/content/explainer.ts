@@ -59,9 +59,10 @@ export function validateExplainer(input: unknown): string[] {
   if (!isStr(e.topic) || !isTopicId(e.topic)) at(`topic lạ "${String(e.topic)}"`)
   if (e.origin !== 'curated' && e.origin !== 'ai') at('origin phải là curated | ai')
 
-  const list = (key: keyof typeof EXPLAINER_LIMITS, check: (item: unknown) => boolean) => {
+  const list = (key: keyof typeof EXPLAINER_LIMITS, check: (item: unknown) => boolean, minOverride?: number) => {
     const v = e[key]
-    const [min, max] = EXPLAINER_LIMITS[key]
+    const [defaultMin, max] = EXPLAINER_LIMITS[key]
+    const min = minOverride ?? defaultMin
     if (!Array.isArray(v)) return at(`"${key}" phải là mảng`)
     if (v.length < min || v.length > max) at(`"${key}" cần ${min}–${max} mục (đang có ${v.length})`)
     v.forEach((item, i) => check(item) || at(`"${key}"[${i}] sai cấu trúc`))
@@ -74,7 +75,8 @@ export function validateExplainer(input: unknown): string[] {
   list('indicators', fields('name', 'why', 'where'))
   list('counterpoints', isStr)
   list('glossary', fields('term', 'definition'))
-  list('sources', (item) => fields('title', 'publisher', 'url')(item) && String((item as { url: string }).url).startsWith('https://'))
+  // bài AI có thể không có nguồn khi không tra cứu được tư liệu (giao diện hiện cảnh báo riêng)
+  list('sources', (item) => fields('title', 'publisher', 'url')(item) && String((item as { url: string }).url).startsWith('https://'), e.origin === 'ai' ? 0 : undefined)
 
   const quiz = e.quiz
   if (!isObj(quiz) || quiz.kind !== 'quiz' || !isStr(quiz.id) || !isStr(quiz.question) || !Array.isArray(quiz.options)) at('quiz sai cấu trúc')

@@ -25,7 +25,7 @@ export function ExplainerView({ e }: { e: Explainer }) {
           </Pill>
           {e.origin === 'ai' ? (
             <Pill tone="warning">
-              <Bot size={14} /> AI tạo · cần kiểm tra nguồn
+              <Bot size={14} /> {e.sources.length ? 'AI tạo · cần kiểm tra nguồn' : 'AI tạo · chưa có nguồn'}
             </Pill>
           ) : (
             <Pill tone="brand">Biên soạn</Pill>
@@ -144,6 +144,14 @@ export function ExplainerView({ e }: { e: Explainer }) {
 
       <section className={styles.section}>
         <h2>Nguồn</h2>
+        {e.sources.length === 0 && (
+          <p className={styles.noSources}>
+            <ShieldAlert size={18} aria-hidden />
+            <span>
+              Không tìm được tư liệu tra cứu cho câu hỏi này, nên bài được AI viết từ <b>kiến thức chung</b> và chưa đối chiếu với tin tức mới. Hãy coi đây là phần giải thích cơ chế, và kiểm chứng số liệu ở nguồn chính thức.
+            </span>
+          </p>
+        )}
         <ul className={styles.sources}>
           {e.sources.map((s) => (
             <li key={s.url}>

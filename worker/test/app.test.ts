@@ -175,12 +175,14 @@ describe('POST /api/explain', () => {
     expect(retrieve.calls).toHaveLength(1)
   })
 
-  it('không tìm được tư liệu → 502 no_sources, không gọi AI', async () => {
-    const { deps, chat } = setup({ retrieve: fakeRetrieve({ notes: '', sources: [] }) })
-    const res = await ask(deps, 'Câu hỏi rất lạ không có kết quả?')
-    expect(res.status).toBe(502)
-    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('no_sources')
-    expect(chat.calls).toHaveLength(0)
+  it('không tìm được tư liệu → AI vẫn trả lời bằng kiến thức chung, bài không có nguồn, không cache tư liệu rỗng', async () => {
+    const { deps, chat, store } = setup({ retrieve: fakeRetrieve({ notes: '', sources: [] }) })
+    const res = await ask(deps, 'Tại sao Mixue bán rẻ thế vẫn có lãi?')
+    expect(res.status).toBe(201)
+    const { explainer } = (await res.json()) as { explainer: Explainer }
+    expect(explainer.sources).toEqual([])
+    expect(chat.calls[0].messages[1].content).toContain('không tìm được tư liệu')
+    expect(store.research.size).toBe(0)
   })
 
   it('key Groq sai → 503 ai_config', async () => {
