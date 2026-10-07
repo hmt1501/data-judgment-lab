@@ -1,0 +1,27 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "data-judgment-lab-api",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "data-judgment-lab",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // phân cách bằng dấu phẩy; ":*" ở cuối = mọi cổng
+    "ALLOWED_ORIGINS": "https://hmt1501.github.io,http://localhost:*,http://127.0.0.1:*",
+    // số bài AI tối đa mỗi ngày (toàn hệ thống) và mỗi IP
+    "DAILY_LIMIT": "20",
+    "DAILY_LIMIT_PER_IP": "8",
+    "GROQ_MODEL": "openai/gpt-oss-120b"
+  },
+  "secrets": {
+    // APP_PASSCODE: để trống/không đặt = không yêu cầu mã
+    "required": ["GROQ_API_KEY"]
+  }
+}

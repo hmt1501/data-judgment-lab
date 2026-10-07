@@ -55,10 +55,11 @@ describe('progress reducers', () => {
 
   it('sanitize bỏ id không tồn tại', () => {
     let p = setCompleted(emptyProgress(), 'gone', true, NOW)
-    p = answerQuiz(markOpened(p, 'gone', NOW), 'old-q', 'a')
+    p = answerQuiz(markOpened(p, 'gone', NOW), 'old-q1', 'a')
+    p = answerQuiz(p, 'some-ai-explainer-q', 'b')
     const clean = sanitize(p, new Set(['a']), new Set(['q1']))
     expect(clean.completed).toEqual({})
-    expect(clean.quiz).toEqual({})
+    expect(clean.quiz).toEqual({ 'some-ai-explainer-q': 'b' })
     expect(clean.history).toEqual([])
   })
 })

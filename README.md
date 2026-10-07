@@ -1,6 +1,11 @@
 # Data Judgment Lab
 
-Ứng dụng học phân tích dữ liệu qua **bài giải mẫu** (worked example) tiếng Việt. Mỗi case có dữ liệu mô phỏng, lời giải theo best practice, câu trắc nghiệm ở các điểm quyết định, bẫy thường gặp và nguồn tham khảo thật. Tiến độ lưu trong trình duyệt.
+Ứng dụng học phân tích dữ liệu tiếng Việt:
+
+- **Thư viện case**: bài giải mẫu (worked example) với dữ liệu mô phỏng, lời giải theo best practice, trắc nghiệm ở các điểm quyết định, bẫy thường gặp và nguồn tham khảo thật.
+- **Đọc nhanh**: bài giải thích ngắn về kinh tế, đầu tư, bất động sản, thương mại — chuỗi nhân quả, tác động tới Việt Nam, chỉ số nên theo dõi, nguồn. Có thể **hỏi AI** để tạo bài mới (backend trong `worker/`, xem [worker/README.md](worker/README.md)).
+
+Tiến độ lưu trong trình duyệt.
 
 ## Chạy trên máy
 
@@ -20,6 +25,9 @@ src/app/               router (hash), AppShell, CommandPalette (Ctrl/⌘ K)
 src/pages/             Home, Library, CaseReader, Path, Profile
 src/components/        ui/ (Button, Card, Pill, Progress…), blocks/ (bảng, biểu đồ, quiz…)
 src/content/           types.ts, taxonomy.ts, cases/<id>.ts, validate.ts
+                       explainer.ts (schema Đọc nhanh, dùng chung với worker), explainers/<slug>.ts
+worker/                Cloudflare Worker + D1: API "Hỏi AI" (Groq)
+scripts/draft-case.ts  soạn nháp case bằng Groq → drafts/ để review
 src/state/ src/lib/    tiến độ, lưu trữ, gợi ý bài tiếp theo, tìm kiếm
 ```
 
@@ -31,6 +39,14 @@ src/state/ src/lib/    tiến độ, lưu trữ, gợi ý bài tiếp theo, tìm
 
 Case tự xuất hiện trong thư viện, lộ trình và tìm kiếm.
 
+## Soạn nháp case bằng AI
+
+```sh
+GROQ_API_KEY=... npm run draft-case -- --id ten-case --level mid --domain mobile --brief "Mô tả tình huống"
+```
+
+Script soạn theo từng phần (vừa giới hạn free tier của Groq), lấy nguồn bằng tra cứu web và kiểm tra link sống, chạy `validateCase`, rồi ghi `drafts/<id>.ts`. **Luôn đọc lại** số liệu, quiz và nguồn trước khi chuyển vào `src/content/cases/`.
+
 ## GitHub Pages
 
-Workflow `.github/workflows/deploy.yml` chạy test, build và deploy thư mục `dist` mỗi khi push lên `main`. Vào **Settings → Pages** và chọn **GitHub Actions** làm nguồn deploy nếu chưa bật.
+Workflow `.github/workflows/deploy.yml` chạy test (frontend + worker), build và deploy thư mục `dist` mỗi khi push lên `main`. Biến `VITE_API_BASE` (Actions variable) bật tính năng hỏi AI; job deploy Worker chỉ chạy khi có secret `CLOUDFLARE_API_TOKEN`. Vào **Settings → Pages** và chọn **GitHub Actions** làm nguồn deploy nếu chưa bật.

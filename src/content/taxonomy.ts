@@ -69,6 +69,20 @@ export const domains = [
 
 export type DomainId = (typeof domains)[number]['id']
 
+export const topics = [
+  { id: 'macro', name: 'Kinh tế vĩ mô', glyph: '🌐' },
+  { id: 'vietnam-economy', name: 'Kinh tế Việt Nam', glyph: '⭐' },
+  { id: 'markets-investing', name: 'Thị trường & đầu tư', glyph: '📈' },
+  { id: 'real-estate', name: 'Bất động sản', glyph: '🏘️' },
+  { id: 'geopolitics-trade', name: 'Địa chính trị & thương mại', glyph: '🧭' },
+  { id: 'personal-finance', name: 'Tài chính cá nhân', glyph: '💰' },
+] as const
+
+export type TopicId = (typeof topics)[number]['id']
+
+export const topicById = (id: TopicId) => topics.find((t) => t.id === id)!
+export const isTopicId = (s: string): s is TopicId => topics.some((t) => t.id === s)
+
 export const levelById = (id: LevelId) => levels.find((l) => l.id === id)!
 export const skillById = (id: SkillId) => skills.find((s) => s.id === id)!
 export const domainById = (id: DomainId) => domains.find((d) => d.id === id)!

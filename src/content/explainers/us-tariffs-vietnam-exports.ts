@@ -1,0 +1,70 @@
+import type { Explainer } from '../explainer'
+
+export const usTariffsVietnamExports: Explainer = {
+  id: 'us-tariffs-vietnam-exports',
+  slug: 'us-tariffs-vietnam-exports',
+  question: 'Thuế quan của Mỹ ảnh hưởng thế nào tới xuất khẩu Việt Nam?',
+  title: 'Thuế quan Mỹ: xuất khẩu Việt Nam chịu tác động qua những kênh nào?',
+  topic: 'geopolitics-trade',
+  tldr: 'Thuế quan nhập khẩu của Mỹ làm hàng Việt Nam đắt hơn tại cửa khẩu Mỹ; điều quan trọng không chỉ là mức thuế tuyệt đối mà là **mức thuế so với nước cạnh tranh** và **quy tắc xuất xứ**. Từ 2025 đến 2026, cơ sở pháp lý và mức thuế áp lên hàng Việt Nam đã thay đổi nhiều lần, nên doanh nghiệp và nhà đầu tư cần theo dõi văn bản chính thức thay vì con số truyền miệng.',
+  keyPoints: [
+    'Bối cảnh (tính đến 07/10/2026, theo USTR và các bản tin pháp lý): khung thỏa thuận tháng 10/2025 dựa trên đạo luật IEEPA nêu mức thuế đối ứng **20%** cho hàng Việt Nam và **40%** cho hàng bị xác định là trung chuyển; ngày 20/02/2026 Tòa án Tối cao Mỹ phán quyết IEEPA không cho phép áp thuế quan, Mỹ chuyển sang thuế toàn cầu tạm thời theo Section 122 (150 ngày từ 24/02/2026); từ 24/07/2026 USTR áp thuế bổ sung **12,5%** theo Section 301 (điều tra về thực thi cấm hàng lao động cưỡng bức) lên phần lớn hàng xuất xứ Việt Nam, có danh mục loại trừ. Đàm phán thương mại đối ứng hai bên vẫn đang tiếp diễn.',
+    'Cơ chế cốt lõi là **giá tương đối**: nếu nước cạnh tranh (Trung Quốc, Ấn Độ, Bangladesh…) chịu mức thuế cao hơn, hàng Việt Nam có thể vẫn giữ hoặc tăng thị phần dù chính Việt Nam cũng bị đánh thuế.',
+    'Ai trả thuế là câu hỏi thực nghiệm: nhà nhập khẩu Mỹ nộp thuế, nhưng gánh nặng có thể chia cho nhà xuất khẩu (giảm giá bán), người tiêu dùng Mỹ (giá cao hơn) hoặc cả chuỗi tùy sức mạnh đàm phán.',
+    '**Quy tắc xuất xứ và trung chuyển** là rủi ro lớn: hàng chỉ gia công đơn giản ở Việt Nam từ linh kiện nước khác có thể không được coi là xuất xứ Việt Nam, và có thể bị điều tra, phạt hoặc áp thuế cao hơn.',
+    'Doanh nghiệp FDI chiếm tỷ trọng lớn trong xuất khẩu sang Mỹ và linh hoạt chuyển nhà máy; doanh nghiệp nội địa thường có biên lợi nhuận mỏng hơn và ít khả năng hấp thụ thuế.',
+  ],
+  causalChain: [
+    { from: 'Mỹ áp hoặc điều chỉnh thuế nhập khẩu với hàng Việt Nam', to: 'Giá hàng Việt Nam tại Mỹ tăng so với trước', mechanism: 'Thuế tính trên trị giá hải quan, nhà nhập khẩu Mỹ phải nộp khi thông quan và tìm cách chuyển một phần sang giá bán hoặc ép giá nhà cung cấp.' },
+    { from: 'Giá hàng Việt Nam tại Mỹ tăng so với trước', to: 'Nhà nhập khẩu Mỹ so sánh lại các nguồn cung', mechanism: 'Quyết định đặt hàng phụ thuộc mức thuế **tương đối** giữa Việt Nam, Trung Quốc, Mexico, ASEAN… cộng với chi phí, chất lượng và thời gian giao hàng.' },
+    { from: 'Nhà nhập khẩu Mỹ so sánh lại các nguồn cung', to: 'Đơn hàng xuất khẩu của Việt Nam thay đổi', mechanism: 'Có thể giảm (nếu Việt Nam bất lợi tương đối), giữ nguyên (nếu mọi nước cùng bị) hoặc tăng (chuyển hướng thương mại từ nước bị đánh thuế nặng hơn).' },
+    { from: 'Chuyển hướng thương mại sang Việt Nam', to: 'Mỹ siết kiểm tra xuất xứ và trung chuyển', mechanism: 'Khi nhập khẩu từ Việt Nam tăng nhanh cùng lúc với nhập khẩu linh kiện từ Trung Quốc vào Việt Nam, cơ quan hải quan Mỹ (CBP) và USTR chú ý hơn tới hàng "đội lốt" xuất xứ.' },
+    { from: 'Đơn hàng xuất khẩu của Việt Nam thay đổi', to: 'Sản xuất, việc làm và cung ngoại tệ trong nước', mechanism: 'Xuất khẩu sang Mỹ là nguồn thặng dư thương mại quan trọng; đơn hàng giảm ảnh hưởng tới việc làm ở dệt may, da giày, điện tử, đồ gỗ và tới cung USD.' },
+  ],
+  vietnamImpact: [
+    { group: 'Dệt may, da giày, đồ gỗ (thâm dụng lao động)', effect: 'Biên lợi nhuận mỏng nên khó hấp thụ thuế; rất nhạy với chênh lệch thuế so với Bangladesh, Campuchia, Indonesia, Ấn Độ.', direction: 'down' },
+    { group: 'Điện tử, máy tính, linh kiện (chủ yếu FDI)', effect: 'Kim ngạch lớn nhưng phụ thuộc chiến lược tập đoàn toàn cầu; có thể giữ vững nếu mức thuế cạnh tranh, hoặc bị dịch chuyển nếu chênh lệch bất lợi. Một số mặt hàng có thể thuộc danh mục loại trừ.', direction: 'mixed' },
+    { group: 'Doanh nghiệp nội địa làm nhà cung cấp phụ', effect: 'Chịu tác động gián tiếp khi khách hàng FDI cắt đơn, nhưng có thể được lợi nếu yêu cầu xuất xứ thúc đẩy dùng đầu vào trong nước.', direction: 'mixed' },
+    { group: 'Doanh nghiệp phụ thuộc linh kiện nhập từ Trung Quốc', effect: 'Rủi ro bị xem xét về xuất xứ/trung chuyển cao hơn; chi phí tuân thủ, truy xuất nguồn gốc tăng.', direction: 'down' },
+    { group: 'Bất động sản khu công nghiệp', effect: 'Nhu cầu thuê phụ thuộc kỳ vọng dài hạn về chênh lệch thuế; bất định chính sách thường làm nhà đầu tư trì hoãn quyết định.', direction: 'mixed' },
+    { group: 'Tỷ giá và cán cân thương mại', effect: 'Nếu xuất khẩu sang Mỹ chậm lại, nguồn cung USD từ thặng dư thương mại giảm, tạo thêm áp lực lên tỷ giá.', direction: 'down' },
+  ],
+  indicators: [
+    { name: 'Kim ngạch xuất khẩu sang Mỹ theo nhóm hàng (tháng)', why: 'Cho thấy ngành nào đang chịu tác động thật, không chỉ theo cảm nhận.', where: 'Cục Hải quan (customs.gov.vn); báo cáo tháng của Cục Thống kê' },
+    { name: 'Văn bản thuế quan chính thức của Mỹ (Federal Register, thông báo USTR)', why: 'Mức thuế, ngày hiệu lực và danh mục loại trừ thay đổi thường xuyên; tin đồn dễ sai.', where: 'Website USTR; Federal Register; CBP' },
+    { name: 'Nhập khẩu từ Mỹ của Trung Quốc và các nước cạnh tranh, mức thuế họ chịu', why: 'Lợi thế của Việt Nam phụ thuộc mức thuế tương đối.', where: 'USTR; US Census Bureau (dữ liệu thương mại); WTO' },
+    { name: 'Nhập khẩu linh kiện, nguyên liệu từ Trung Quốc vào Việt Nam', why: 'Chỉ báo rủi ro trung chuyển và mức giá trị gia tăng trong nước.', where: 'Cục Hải quan; Bộ Công Thương' },
+    { name: 'Chỉ số PMI ngành sản xuất Việt Nam (mục đơn hàng xuất khẩu mới)', why: 'Tín hiệu sớm về đơn hàng trước khi số liệu hải quan công bố.', where: 'S&P Global PMI Việt Nam' },
+  ],
+  counterpoints: [
+    'Nếu các nước cạnh tranh cũng chịu thuế tương đương hoặc cao hơn, tác động ròng lên thị phần của Việt Nam có thể nhỏ; tác động lớn hơn có thể đến từ việc cầu tiêu dùng Mỹ yếu đi.',
+    'Bối cảnh pháp lý ở Mỹ thay đổi nhanh (phán quyết tòa án, đạo luật áp dụng, thỏa thuận song phương); kết luận dựa trên một mức thuế cụ thể có thể lỗi thời sau vài tháng.',
+    'Thuế quan chỉ là một yếu tố; chi phí lao động, hạ tầng, ổn định chính sách và các FTA khác (EVFTA, CPTPP, RCEP) cũng quyết định nơi đặt nhà máy.',
+  ],
+  glossary: [
+    { term: 'Thuế đối ứng (reciprocal tariff)', definition: 'Thuế Mỹ áp theo từng đối tác với lý do cân bằng thương mại; mức cụ thể do văn bản hành pháp hoặc thỏa thuận quy định.' },
+    { term: 'Section 301', definition: 'Điều khoản trong Luật Thương mại 1974 của Mỹ cho phép USTR điều tra và áp biện pháp (kể cả thuế) với thực tiễn thương mại bị cho là không công bằng.' },
+    { term: 'IEEPA', definition: 'Đạo luật Quyền hạn Kinh tế Khẩn cấp Quốc tế của Mỹ; năm 2026 Tòa án Tối cao Mỹ phán quyết đạo luật này không cho phép tổng thống áp thuế quan.' },
+    { term: 'Chuyển hướng thương mại (trade diversion)', definition: 'Nhập khẩu chuyển từ nước bị đánh thuế cao sang nước bị đánh thuế thấp hơn.' },
+    { term: 'Trung chuyển (transshipment)', definition: 'Hàng đi qua một nước thứ ba, có thể chỉ gia công đơn giản, nhằm hưởng mức thuế thấp hơn; bị coi là lẩn tránh nếu không đạt quy tắc xuất xứ.' },
+    { term: 'Quy tắc xuất xứ', definition: 'Tiêu chí xác định "hàng của nước nào", ví dụ chuyển đổi mã HS hoặc tỷ lệ giá trị gia tăng tối thiểu.' },
+  ],
+  quiz: {
+    kind: 'quiz',
+    id: 'us-tariffs-vietnam-exports-q',
+    question: 'Mỹ tăng thuế với hàng Việt Nam, đồng thời tăng thuế mạnh hơn với hàng cùng loại từ một nước cạnh tranh lớn. Nhận định nào hợp lý nhất?',
+    options: [
+      { id: 'a', text: 'Xuất khẩu của Việt Nam sang Mỹ chắc chắn giảm vì thuế của Việt Nam tăng.', explain: 'Bỏ qua giá tương đối: nhà nhập khẩu so sánh giữa các nguồn cung, nên Việt Nam có thể giành thêm đơn hàng nếu đối thủ bị đánh thuế nặng hơn.' },
+      { id: 'b', text: 'Thị phần Việt Nam có thể giữ hoặc tăng nhờ chuyển hướng thương mại, nhưng cần theo dõi cầu Mỹ và rủi ro bị kiểm tra xuất xứ.', correct: true, explain: 'Đúng. Mức thuế tương đối là yếu tố quyết định thị phần; nhưng tổng cầu Mỹ có thể yếu đi và dòng hàng tăng đột biến dễ khiến Mỹ siết quy tắc xuất xứ, trung chuyển.' },
+      { id: 'c', text: 'Không ảnh hưởng gì vì nhà nhập khẩu Mỹ mới là người nộp thuế.', explain: 'Người nộp thuế khác với người chịu thuế: gánh nặng có thể được chuyển sang nhà xuất khẩu qua giảm giá, hoặc làm giảm lượng mua.' },
+    ],
+  },
+  sources: [
+    { title: 'Fact Sheet: The United States and Viet Nam Reach a Framework for an Agreement on Reciprocal, Fair, and Balanced Trade (10/2025)', publisher: 'USTR', url: 'https://ustr.gov/about/policy-offices/press-office/fact-sheets/2025/october/fact-sheet-united-states-and-viet-nam-reach-framework-agreement-reciprocal-fair-and-balanced-trade' },
+    { title: 'US Supreme Court invalidates IEEPA tariffs, reshaping the administration’s trade toolkit', publisher: 'Hogan Lovells', url: 'https://www.hlc.com/en/publications/us-supreme-court-invalidates-ieepa-tariffs-reshaping-the-administrations-trade-toolkit' },
+    { title: 'US Section 301 Investigation: New Tariff Risks for Vietnam Exporters', publisher: 'Vietnam Briefing', url: 'https://www.vietnam-briefing.com/news/us-section-301-forced-labor-investigation-new-trade-compliance-risks-for-vietnam-exporters.html/' },
+    { title: 'Việt Nam, US continue negotiations towards reciprocal trade agreement (01/10/2026)', publisher: 'Việt Nam News', url: 'https://vietnamnews.vn/politics-laws/1801022/viet-nam-us-continue-negotiations-towards-reciprocal-trade-agreement.html' },
+  ],
+  origin: 'curated',
+  asOf: '2026-10-07',
+}

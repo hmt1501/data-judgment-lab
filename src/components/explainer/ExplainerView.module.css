@@ -1,0 +1,300 @@
+.article {
+  max-width: var(--reading-w);
+  display: grid;
+  gap: var(--sp-6);
+}
+
+.header {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-2);
+}
+
+.header h1 {
+  font-size: var(--fs-2xl);
+}
+
+.question {
+  font-size: var(--fs-md);
+  color: var(--text-muted);
+}
+
+.question span {
+  font-weight: 700;
+  color: var(--text);
+}
+
+.tldr {
+  display: grid;
+  gap: var(--sp-2);
+  padding: var(--sp-5);
+  border-radius: var(--radius-lg);
+  background: var(--brand-soft);
+  border-left: 4px solid var(--brand);
+  font-size: var(--fs-md);
+  line-height: 1.65;
+}
+
+.tldr b {
+  font-size: var(--fs-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand);
+}
+
+.section {
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.section h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  font-size: var(--fs-lg);
+}
+
+.points {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-3);
+}
+
+.points li {
+  display: flex;
+  gap: var(--sp-3);
+}
+
+.points svg {
+  flex: none;
+  color: var(--warning);
+  margin-top: 4px;
+}
+
+/* ---------- chuỗi nhân quả ---------- */
+.chain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+
+.node {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-weight: 700;
+}
+
+.chain li:last-child .node:last-child {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-strong);
+}
+
+.edge {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-2) 0 var(--sp-2) var(--sp-4);
+  margin-left: var(--sp-4);
+  border-left: 2px dashed var(--border-strong);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.edge svg {
+  flex: none;
+  color: var(--brand);
+  margin-top: 2px;
+}
+
+/* ---------- tác động ---------- */
+.impacts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--sp-3);
+}
+
+.impact {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.impact p {
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+  margin-top: var(--sp-1);
+}
+
+.impactIcon {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--tone-soft);
+  color: var(--tone);
+}
+
+.up {
+  --tone: var(--positive);
+  --tone-soft: var(--positive-soft);
+}
+
+.down {
+  --tone: var(--negative);
+  --tone-soft: var(--negative-soft);
+}
+
+.mixed {
+  --tone: var(--warning);
+  --tone-soft: var(--warning-soft);
+}
+
+/* ---------- chỉ số ---------- */
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--fs-sm);
+}
+
+.table th,
+.table td {
+  padding: 10px 14px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--border);
+}
+
+.table thead th {
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+  color: var(--text-muted);
+}
+
+.table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.table tbody th {
+  min-width: 160px;
+}
+
+/* ---------- góc nhìn khác ---------- */
+.counter {
+  padding: var(--sp-4) var(--sp-5);
+  border-radius: var(--radius-lg);
+  background: var(--warning-soft);
+}
+
+.counter h2 {
+  color: var(--warning);
+  font-size: var(--fs-md);
+}
+
+.counter ul {
+  margin: 0;
+  padding-left: var(--sp-5);
+  display: grid;
+  gap: var(--sp-2);
+}
+
+/* ---------- thuật ngữ ---------- */
+.glossary {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--sp-3);
+}
+
+.glossary > div {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.glossary dt {
+  font-weight: 700;
+}
+
+.glossary dd {
+  margin: var(--sp-1) 0 0;
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+/* ---------- nguồn ---------- */
+.sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--sp-2);
+}
+
+.sources li {
+  padding: var(--sp-3) var(--sp-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.sources a {
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.sources span {
+  display: block;
+  font-size: var(--fs-xs);
+  color: var(--text-subtle);
+}
+
+.disclaimer {
+  display: flex;
+  gap: var(--sp-2);
+  font-size: var(--fs-sm);
+  color: var(--text-muted);
+}
+
+.disclaimer svg {
+  flex: none;
+  margin-top: 3px;
+}
+
+@media (max-width: 600px) {
+  .header h1 {
+    font-size: var(--fs-xl);
+  }
+
+  .tldr {
+    padding: var(--sp-4);
+    font-size: var(--fs-base);
+  }
+
+  .impacts,
+  .glossary {
+    grid-template-columns: 1fr;
+  }
+}

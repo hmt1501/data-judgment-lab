@@ -34,6 +34,8 @@ Theme: `html[data-theme="light" | "dark"]`; khi không đặt, theo `prefers-col
 - `ProgressRing` / `ProgressBar` — luôn kèm số dạng chữ bên cạnh.
 - Blocks nội dung case (`src/components/blocks`): `text`, `kpis`, `table`, `chart`, `formula`, `quiz`, `callout`, `list`, `actions`, `pitfalls`.
 
+- Explainer (`src/components/explainer`): `ExplainerView` (tóm tắt, ý chính, chuỗi nhân quả dạng sơ đồ dọc, thẻ tác động có mũi tên ↑↓↔ + chữ, bảng chỉ số, góc nhìn khác, thuật ngữ, quiz, nguồn, disclaimer) và `ExplainerCard`. Bài AI luôn có nhãn "AI tạo · cần kiểm tra nguồn".
+
 ## Bố cục
 
 - ≥ 1024px: sidebar 248px + nội dung. Trang case: cột đọc + mục lục sticky 240px.

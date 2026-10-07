@@ -34,7 +34,7 @@ export function loadProgress(storage: StorageLike | undefined, now = new Date().
   const stored = readJson(storage, STORAGE_KEY) as Partial<Progress> | undefined
   if (stored && stored.version === 2) {
     const base = emptyProgress()
-    return { ...base, ...stored, settings: { ...base.settings, ...stored.settings } }
+    return { ...base, ...stored, explainersRead: { ...stored.explainersRead }, settings: { ...base.settings, ...stored.settings } }
   }
   return fromLegacy(storage, now) ?? emptyProgress()
 }

@@ -1,0 +1,70 @@
+import type { Explainer } from '../explainer'
+
+export const vietnamMarketUpgrade: Explainer = {
+  id: 'vietnam-market-upgrade',
+  slug: 'vietnam-market-upgrade',
+  question: 'Nâng hạng thị trường chứng khoán Việt Nam là gì và có ý nghĩa thế nào với dòng vốn ngoại?',
+  title: 'Nâng hạng thị trường chứng khoán: FTSE Russell, MSCI và dòng vốn ngoại',
+  topic: 'markets-investing',
+  tldr: '"Nâng hạng" là việc các nhà cung cấp chỉ số như **FTSE Russell** và **MSCI** xếp một thị trường vào nhóm cao hơn (ví dụ từ cận biên lên mới nổi), khiến các quỹ theo chỉ số đó phải hoặc có thể mua cổ phiếu của thị trường ấy. FTSE Russell đã đưa Việt Nam lên **Thị trường mới nổi thứ cấp** với hiệu lực từ **21/9/2026**, thêm vào chỉ số theo 4 đợt đến tháng 9/2027; MSCI thì đến kỳ đánh giá tháng 6/2026 **vẫn chưa** đưa Việt Nam vào danh sách theo dõi. Nâng hạng mở cửa cho dòng vốn, nhưng quy mô và độ bền của dòng vốn phụ thuộc vào cải cách thực chất và nền tảng doanh nghiệp.',
+  keyPoints: [
+    'Nhà cung cấp chỉ số phân loại thị trường dựa trên bộ tiêu chí về **khả năng tiếp cận** của nhà đầu tư nước ngoài: room sở hữu, thanh toán bù trừ, cơ chế ký quỹ trước giao dịch, quy trình mở tài khoản, công bố thông tin bằng tiếng Anh, thanh khoản...',
+    'FTSE Russell công bố ngày 7/10/2025 và xác nhận ngày 7/4/2026 (sau kỳ đánh giá giữa kỳ tháng 3/2026) việc nâng Việt Nam từ Cận biên lên Mới nổi thứ cấp; cổ phiếu Việt Nam được thêm vào chỉ số toàn cầu theo 4 đợt: 10% (9/2026), 20% (3/2027), 35% (6/2027), 35% (9/2027).',
+    'MSCI trong kỳ đánh giá phân loại thị trường năm 2026 (công bố 24/6/2026) ghi nhận tiến bộ nhưng **chưa** đưa Việt Nam vào danh sách theo dõi nâng hạng; giới hạn sở hữu nước ngoài (room) vẫn là vướng mắc lớn nhất.',
+    'Dòng vốn **thụ động** (quỹ ETF, quỹ chỉ số) mua theo tỷ trọng chỉ số nên tương đối dễ ước tính; dòng vốn **chủ động** khó đoán hơn và phụ thuộc định giá, tăng trưởng lợi nhuận, tỷ giá.',
+    'Kỳ vọng nâng hạng thường được thị trường "định giá trước"; ngày hiệu lực không đồng nghĩa giá cổ phiếu chắc chắn tăng. Đây là kiến thức nền, không phải khuyến nghị đầu tư.',
+  ],
+  causalChain: [
+    { from: 'Cải cách hạ tầng thị trường', to: 'Đáp ứng tiêu chí của nhà cung cấp chỉ số', mechanism: 'Bỏ yêu cầu ký quỹ trước giao dịch (non-prefunding) cho tổ chức nước ngoài, quy trình xử lý giao dịch lỗi, cho phép giao dịch qua môi giới toàn cầu… giúp nhà đầu tư ngoại tiếp cận dễ hơn.' },
+    { from: 'Đáp ứng tiêu chí của nhà cung cấp chỉ số', to: 'Được xếp hạng lại và thêm vào chỉ số mới nổi', mechanism: 'FTSE Russell chuyển Việt Nam từ bộ chỉ số Cận biên sang bộ chỉ số toàn cầu (FTSE GEIS), gồm FTSE Emerging, FTSE All-World.' },
+    { from: 'Được xếp hạng lại và thêm vào chỉ số mới nổi', to: 'Quỹ thụ động phải mua cổ phiếu Việt Nam', mechanism: 'Quỹ mô phỏng chỉ số phải nắm giữ cổ phiếu theo đúng tỷ trọng; mỗi đợt tăng tỷ trọng tạo nhu cầu mua bắt buộc vào ngày hiệu lực.' },
+    { from: 'Quỹ thụ động phải mua cổ phiếu Việt Nam', to: 'Quỹ chủ động cân nhắc phân bổ', mechanism: 'Việt Nam trở thành một phần của "chuẩn so sánh" (benchmark) mới nổi; quỹ chủ động có lý do để nghiên cứu, nhưng chỉ mua khi thấy định giá và triển vọng hấp dẫn.' },
+    { from: 'Quỹ chủ động cân nhắc phân bổ', to: 'Thanh khoản, định giá và yêu cầu quản trị doanh nghiệp', mechanism: 'Dòng vốn lớn hơn và đa dạng hơn có thể cải thiện thanh khoản; đồng thời doanh nghiệp chịu áp lực minh bạch, công bố thông tin chuẩn quốc tế.' },
+  ],
+  vietnamImpact: [
+    { group: 'Doanh nghiệp vốn hóa lớn, thanh khoản cao, còn room ngoại', effect: 'Nhóm đủ điều kiện vào chỉ số (danh sách FTSE dự kiến tháng 8/2026 gồm 27 mã trên HOSE) được dòng vốn thụ động mua theo từng đợt.', direction: 'up' },
+    { group: 'Doanh nghiệp nhỏ, hết room hoặc free-float thấp', effect: 'Không được thêm vào chỉ số hoặc tỷ trọng nhỏ; có thể bị "rút bớt" vốn khi tiền dồn về nhóm vốn hóa lớn.', direction: 'mixed' },
+    { group: 'Nhà đầu tư cá nhân', effect: 'Thị trường có thêm thanh khoản và người mua tổ chức, nhưng biến động quanh ngày hiệu lực có thể lớn; mua theo tin "nâng hạng" khi giá đã phản ánh kỳ vọng là rủi ro.', direction: 'mixed' },
+    { group: 'Công ty chứng khoán, ngân hàng lưu ký', effect: 'Hưởng lợi từ phí môi giới, lưu ký, dịch vụ cho tổ chức nước ngoài; cần đầu tư hệ thống và quản trị rủi ro thanh toán.', direction: 'up' },
+    { group: 'Tỷ giá và cán cân vốn', effect: 'Vốn ngoại vào giúp tăng cung USD; nhưng vốn gián tiếp cũng có thể rút nhanh khi điều kiện toàn cầu xấu đi.', direction: 'mixed' },
+  ],
+  indicators: [
+    { name: 'Thông báo phân loại thị trường của FTSE Russell (tháng 3 và tháng 9) và lịch các đợt thêm vào chỉ số', why: 'Xác định ngày hiệu lực, tỷ trọng từng đợt và danh sách cổ phiếu đủ điều kiện.', where: 'Website LSEG/FTSE Russell (thông cáo, tài liệu FAQ về Việt Nam)' },
+    { name: 'Kết quả đánh giá phân loại thị trường hằng năm của MSCI (thường tháng 6)', why: 'Cho biết Việt Nam có vào danh sách theo dõi nâng hạng của MSCI hay không, và tiêu chí nào còn vướng.', where: 'Website MSCI (Market Classification)' },
+    { name: 'Tỷ lệ sở hữu nước ngoài và room còn lại của từng mã', why: 'Mã hết room thì quỹ ngoại không mua thêm được, tỷ trọng chỉ số bị giảm.', where: 'HOSE/HNX, VSD (Tổng công ty Lưu ký và Bù trừ chứng khoán), công ty chứng khoán' },
+    { name: 'Giao dịch ròng khối ngoại và dòng tiền vào các ETF có Việt Nam', why: 'Phân biệt dòng vốn thực tế với kỳ vọng.', where: 'Thống kê HOSE, báo cáo của các công ty chứng khoán, trang thông tin của quỹ' },
+    { name: 'Tiến độ hệ thống thanh toán bù trừ trung tâm (CCP) và các văn bản của UBCKNN/Bộ Tài chính', why: 'MSCI coi đây là mốc quan trọng cho các kỳ đánh giá sau.', where: 'Website UBCKNN (ssc.gov.vn), VSD, Bộ Tài chính' },
+  ],
+  counterpoints: [
+    'Tỷ trọng của Việt Nam trong chỉ số mới nổi là rất nhỏ (FTSE ước tính khoảng 0,3% chỉ số FTSE Emerging khi thêm đủ 100%, theo giá cuối tháng 8/2026), nên dòng vốn thụ động không phải "dòng tiền khổng lồ" như nhiều kỳ vọng.',
+    'Nhiều thị trường từng chứng kiến giá tăng trước nâng hạng rồi điều chỉnh sau ngày hiệu lực ("mua tin đồn, bán sự thật").',
+    'Dòng vốn chủ động mới quyết định quy mô dài hạn, và nó phụ thuộc vào tăng trưởng lợi nhuận, tỷ giá, lãi suất toàn cầu hơn là vào nhãn "mới nổi".',
+    'FTSE đánh giá lại khả năng mô phỏng chỉ số sau mỗi đợt; nếu vận hành gặp trục trặc, các đợt sau có thể bị điều chỉnh.',
+  ],
+  glossary: [
+    { term: 'Thị trường cận biên / mới nổi', definition: 'Các nhóm phân loại của nhà cung cấp chỉ số; nhóm mới nổi có tiêu chí cao hơn về quy mô, thanh khoản và khả năng tiếp cận cho nhà đầu tư nước ngoài.' },
+    { term: 'Mới nổi thứ cấp (Secondary Emerging)', definition: 'Bậc của FTSE Russell nằm dưới "Mới nổi tiên tiến" và trên "Cận biên".' },
+    { term: 'Danh sách theo dõi (watch list)', definition: 'Danh sách thị trường được xem xét nâng/hạ hạng; thường phải nằm trong danh sách này ít nhất một kỳ trước khi được nâng hạng.' },
+    { term: 'Quỹ thụ động', definition: 'Quỹ mô phỏng một chỉ số, mua bán theo tỷ trọng chỉ số thay vì tự chọn cổ phiếu.' },
+    { term: 'Room ngoại (FOL)', definition: 'Giới hạn tỷ lệ sở hữu tối đa của nhà đầu tư nước ngoài tại một doanh nghiệp.' },
+    { term: 'Non-prefunding', definition: 'Cơ chế cho phép tổ chức nước ngoài đặt lệnh mua mà không phải có đủ tiền trên tài khoản trước khi giao dịch.' },
+  ],
+  quiz: {
+    kind: 'quiz',
+    id: 'vietnam-market-upgrade-q',
+    question: 'Ngày FTSE Russell thêm đợt đầu cổ phiếu Việt Nam vào chỉ số mới nổi (21/9/2026) đã qua. Nhận định nào hợp lý nhất?',
+    options: [
+      { id: 'a', text: 'Mọi cổ phiếu trên sàn sẽ tăng giá vì dòng vốn ngoại đổ vào toàn thị trường.', explain: 'Quỹ thụ động chỉ mua các mã có trong danh sách đủ điều kiện (vốn hóa, thanh khoản, room ngoại), theo tỷ trọng nhỏ và chia đợt. Nhiều mã không được mua, và giá có thể đã phản ánh kỳ vọng từ trước.' },
+      { id: 'b', text: 'Việt Nam đã được cả FTSE Russell và MSCI công nhận là thị trường mới nổi.', explain: 'Không đúng. Đến kỳ đánh giá tháng 6/2026, MSCI vẫn chưa đưa Việt Nam vào danh sách theo dõi nâng hạng; mỗi nhà cung cấp chỉ số có tiêu chí và lộ trình riêng.' },
+      { id: 'c', text: 'Tác động phụ thuộc vào tỷ trọng từng đợt, mã nào đủ điều kiện, và việc dòng vốn chủ động có theo sau hay không.', correct: true, explain: 'Đúng. Dòng vốn thụ động tương đối dự báo được theo lịch 4 đợt (9/2026–9/2027), còn dòng vốn chủ động phụ thuộc định giá, lợi nhuận doanh nghiệp và điều kiện vĩ mô. Cần theo dõi giao dịch khối ngoại và room từng mã.' },
+    ],
+  },
+  sources: [
+    { title: 'FTSE Russell announces results of March 2026 semi-annual country classification review', publisher: 'LSEG / FTSE Russell', url: 'https://www.lseg.com/en/media-centre/press-releases/ftse-russell/2026/ftse-russell-announces-results-march-2026-semi-annual-country-classification-review-equities-fixed-income' },
+    { title: 'Reclassification of Vietnam from Frontier to Secondary Emerging Market Status – FAQ (v1.3, 8/2026)', publisher: 'LSEG / FTSE Russell', url: 'https://www.lseg.com/content/dam/ftse-russell/en_us/documents/policy-documents/ftse-faq-document-vietnam-reclassification.pdf' },
+    { title: 'MSCI Market Classification', publisher: 'MSCI', url: 'https://www.msci.com/indexes/index-resources/market-classification' },
+    { title: 'MSCI keeps Việt Nam off upgrade watch list', publisher: 'Việt Nam News', url: 'https://vietnamnews.vn/economy/1784056/msci-keeps-viet-nam-off-upgrade-watch-list.html' },
+  ],
+  origin: 'curated',
+  asOf: '2026-10-07',
+}

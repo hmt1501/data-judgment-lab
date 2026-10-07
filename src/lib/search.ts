@@ -1,13 +1,9 @@
+import { foldVi } from '../content/explainer'
 import { domainById, levelById, skillById } from '../content/taxonomy'
 import type { CaseStudy } from '../content/types'
 
 /** Chữ thường, bỏ dấu tiếng Việt: "Đơn hàng" → "don hang". */
-export const fold = (s: string) =>
-  s
-    .toLocaleLowerCase('vi')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
+export const fold = foldVi
 
 const haystack = new WeakMap<CaseStudy, string>()
 

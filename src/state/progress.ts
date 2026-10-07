@@ -13,7 +13,9 @@ export type Progress = {
   history: HistoryEntry[]
   /** caseId → section đang đọc */
   lastSection: Record<string, string>
-  settings: { name: string; theme: Theme }
+  /** slug → bài "Đọc nhanh" đã đọc (lưu cả tiêu đề vì bài AI không có sẵn trong bundle) */
+  explainersRead: Record<string, { title: string; at: string }>
+  settings: { name: string; theme: Theme; aiPasscode: string }
 }
 
 export const HISTORY_LIMIT = 20
@@ -25,7 +27,8 @@ export const emptyProgress = (): Progress => ({
   saved: [],
   history: [],
   lastSection: {},
-  settings: { name: '', theme: 'system' },
+  explainersRead: {},
+  settings: { name: '', theme: 'system', aiPasscode: '' },
 })
 
 export function markOpened(p: Progress, caseId: string, now: string): Progress {
@@ -60,6 +63,11 @@ export function setLastSection(p: Progress, caseId: string, sectionId: string): 
   return { ...p, lastSection: { ...p.lastSection, [caseId]: sectionId } }
 }
 
+export function markExplainerRead(p: Progress, slug: string, title: string, now: string): Progress {
+  if (p.explainersRead[slug]) return p
+  return { ...p, explainersRead: { ...p.explainersRead, [slug]: { title, at: now } } }
+}
+
 export function updateSettings(p: Progress, patch: Partial<Progress['settings']>): Progress {
   return { ...p, settings: { ...p.settings, ...patch } }
 }
@@ -71,7 +79,8 @@ export function sanitize(p: Progress, caseIds: Set<string>, quizIds: Set<string>
   return {
     ...p,
     completed: keep(p.completed, caseIds),
-    quiz: keep(p.quiz, quizIds),
+    // quiz của bài "Đọc nhanh" (id kết thúc "-q", có thể là bài AI không biết trước) luôn được giữ
+    quiz: Object.fromEntries(Object.entries(p.quiz).filter(([k]) => quizIds.has(k) || k.endsWith('-q'))),
     saved: p.saved.filter((id) => caseIds.has(id)),
     history: p.history.filter((h) => caseIds.has(h.caseId)),
     lastSection: keep(p.lastSection, caseIds),

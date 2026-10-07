@@ -1,0 +1,71 @@
+import type { Explainer } from '../explainer'
+
+export const globalRecessionVietnam: Explainer = {
+  id: 'global-recession-vietnam',
+  slug: 'global-recession-vietnam',
+  question: 'Nếu kinh tế thế giới suy thoái thì Việt Nam bị tác động thế nào?',
+  title: 'Suy thoái toàn cầu: vì sao Việt Nam nhạy cảm và có những vùng đệm nào?',
+  topic: 'macro',
+  tldr: 'Việt Nam là nền kinh tế có **độ mở thương mại rất cao** (tổng xuất nhập khẩu lớn hơn GDP), nên suy thoái ở Mỹ, EU, Trung Quốc lan vào nhanh qua **đơn hàng xuất khẩu**, rồi tới việc làm, FDI, du lịch và kiều hối. Vùng đệm gồm cầu nội địa, đầu tư công, dư địa tài khóa và tiền tệ, nhưng hiệu quả phụ thuộc vào việc suy thoái đến từ đâu và kéo dài bao lâu.',
+  keyPoints: [
+    'Kênh mạnh nhất thường là **xuất khẩu chế biến chế tạo**: khi người tiêu dùng Mỹ, EU cắt chi tiêu, đơn hàng điện tử, dệt may, đồ gỗ giảm trước.',
+    'FDI có độ trễ: dự án đã cam kết thường vẫn giải ngân, nhưng quyết định mở rộng mới có thể bị hoãn khi tập đoàn mẹ thắt chi.',
+    'Kiều hối và du lịch quốc tế giảm khi thu nhập ở nước gửi tiền và nước gửi khách giảm, dù kiều hối thường ổn định hơn du lịch.',
+    'Công cụ ứng phó: đẩy nhanh **đầu tư công**, giãn/giảm thuế phí, hạ lãi suất và hỗ trợ tín dụng — với giới hạn là lạm phát, tỷ giá và nợ công.',
+    'Suy thoái toàn cầu cũng thường kéo **giá dầu và hàng hóa** xuống, giảm áp lực lạm phát nhập khẩu — một vùng đệm gián tiếp.',
+  ],
+  causalChain: [
+    { from: 'Các nền kinh tế lớn (Mỹ, EU, Trung Quốc) suy thoái', to: 'Cầu nhập khẩu hàng tiêu dùng và linh kiện giảm', mechanism: 'Thất nghiệp tăng, thu nhập giảm, doanh nghiệp xả hàng tồn kho thay vì đặt thêm.' },
+    { from: 'Cầu nhập khẩu hàng tiêu dùng và linh kiện giảm', to: 'Đơn hàng xuất khẩu của Việt Nam giảm', mechanism: 'Nhà nhập khẩu cắt hoặc hoãn đơn; giá xuất khẩu chịu sức ép.' },
+    { from: 'Đơn hàng xuất khẩu của Việt Nam giảm', to: 'Sản xuất chậm lại, việc làm và thu nhập giảm', mechanism: 'Nhà máy cắt ca, giảm giờ làm, cắt giảm lao động ở các khu công nghiệp tập trung xuất khẩu.' },
+    { from: 'Sản xuất chậm lại, việc làm và thu nhập giảm', to: 'Tiêu dùng nội địa và tín dụng yếu đi', mechanism: 'Người lao động thắt chi; doanh nghiệp giảm vay đầu tư; ngân hàng thận trọng hơn khi nợ xấu tiềm ẩn tăng.' },
+    { from: 'Tiêu dùng nội địa và tín dụng yếu đi', to: 'Chính phủ và NHNN dùng chính sách hỗ trợ', mechanism: 'Đẩy nhanh giải ngân đầu tư công, giảm thuế phí, hạ lãi suất điều hành nếu lạm phát và tỷ giá cho phép.' },
+  ],
+  vietnamImpact: [
+    { group: 'Doanh nghiệp xuất khẩu (điện tử, dệt may, da giày, đồ gỗ)', effect: 'Đơn hàng và giá bán giảm; doanh nghiệp nhỏ, nội địa có ít vốn đệm chịu rủi ro cao hơn.', direction: 'down' },
+    { group: 'Người lao động khu công nghiệp', effect: 'Giảm giờ làm, thu nhập, có thể mất việc tạm thời.', direction: 'down' },
+    { group: 'Du lịch, hàng không, lưu trú', effect: 'Khách quốc tế giảm khi thu nhập ở nước gửi khách giảm; khách nội địa có thể bù một phần.', direction: 'down' },
+    { group: 'Người vay vốn', effect: 'Nếu lạm phát thấp và tỷ giá ổn định, NHNN có thêm dư địa hạ lãi suất, giảm chi phí vay.', direction: 'up' },
+    { group: 'Lạm phát, giá năng lượng', effect: 'Giá dầu, hàng hóa thế giới thường giảm khi cầu yếu, giảm áp lực giá trong nước.', direction: 'up' },
+    { group: 'Ngân sách và nợ công', effect: 'Thu ngân sách giảm trong khi chi hỗ trợ tăng; Việt Nam có dư địa nhất định nhưng cần cân đối với mục tiêu ổn định vĩ mô.', direction: 'mixed' },
+    { group: 'Thị trường chứng khoán', effect: 'Thường giảm trong giai đoạn đầu do kỳ vọng lợi nhuận và dòng vốn ngoại rút; có thể hồi phục sớm khi chính sách nới lỏng.', direction: 'mixed' },
+  ],
+  indicators: [
+    { name: 'Dự báo tăng trưởng toàn cầu và các đối tác lớn', why: 'Cho biết quy mô và độ rộng của suy giảm.', where: 'World Bank Global Economic Prospects; IMF World Economic Outlook; ADB Asian Development Outlook' },
+    { name: 'PMI sản xuất Việt Nam (đơn hàng xuất khẩu mới)', why: 'Tín hiệu sớm trước số liệu xuất khẩu chính thức.', where: 'S&P Global PMI Việt Nam' },
+    { name: 'Kim ngạch xuất khẩu theo thị trường và nhóm hàng', why: 'Đo trực tiếp kênh thương mại.', where: 'Cục Hải quan (customs.gov.vn); Cục Thống kê' },
+    { name: 'Vốn FDI giải ngân và đăng ký mới', why: 'Phân biệt dự án đang triển khai với quyết định đầu tư mới.', where: 'Cục Thống kê (nso.gov.vn); Bộ Tài chính' },
+    { name: 'Lượng khách quốc tế và kiều hối', why: 'Hai kênh thu ngoại tệ ngoài thương mại hàng hóa.', where: 'Cục Thống kê; NHNN và báo cáo World Bank về kiều hối' },
+    { name: 'Tỷ lệ thất nghiệp, lao động mất việc tại khu công nghiệp', why: 'Đo tác động lên hộ gia đình.', where: 'Cục Thống kê (điều tra lao động – việc làm quý)' },
+  ],
+  counterpoints: [
+    'Không phải suy thoái nào cũng giống nhau: suy thoái nhẹ ở một khu vực có thể được bù bằng thị trường khác hoặc bằng chuyển dịch đơn hàng sang Việt Nam.',
+    'Nếu suy thoái đi kèm USD mạnh và vốn rút khỏi thị trường mới nổi, dư địa hạ lãi suất của NHNN bị hạn chế bởi áp lực tỷ giá.',
+    'Cầu nội địa và đầu tư công là vùng đệm, nhưng tốc độ giải ngân đầu tư công trong thực tế thường chậm hơn kế hoạch, làm giảm hiệu quả ứng phó.',
+  ],
+  glossary: [
+    { term: 'Suy thoái (recession)', definition: 'Giai đoạn hoạt động kinh tế suy giảm rộng và kéo dài; một quy ước phổ biến là GDP giảm hai quý liên tiếp.' },
+    { term: 'Độ mở thương mại', definition: 'Tổng kim ngạch xuất nhập khẩu so với GDP; càng cao thì nền kinh tế càng nhạy với cầu bên ngoài.' },
+    { term: 'Kiều hối', definition: 'Tiền người lao động và kiều bào ở nước ngoài gửi về trong nước.' },
+    { term: 'Chính sách ngược chu kỳ', definition: 'Nới lỏng tài khóa, tiền tệ khi kinh tế suy yếu và thắt chặt khi kinh tế quá nóng.' },
+    { term: 'PMI', definition: 'Chỉ số nhà quản trị mua hàng; trên 50 cho thấy mở rộng, dưới 50 cho thấy thu hẹp so với tháng trước.' },
+  ],
+  quiz: {
+    kind: 'quiz',
+    id: 'global-recession-vietnam-q',
+    question: 'Các tổ chức quốc tế hạ dự báo tăng trưởng toàn cầu, nhưng FDI giải ngân của Việt Nam tháng này vẫn tăng. Kết luận nào hợp lý nhất?',
+    options: [
+      { id: 'a', text: 'Việt Nam miễn nhiễm với suy thoái toàn cầu.', explain: 'FDI giải ngân phản ánh các dự án đã quyết định từ trước; đơn hàng xuất khẩu, du lịch và việc làm có thể đã bắt đầu yếu đi.' },
+      { id: 'b', text: 'FDI giải ngân là chỉ báo có độ trễ; cần xem đơn hàng xuất khẩu, PMI và FDI đăng ký mới để đánh giá tác động.', correct: true, explain: 'Đúng. Giải ngân thường theo tiến độ dự án cũ; tín hiệu sớm của suy giảm thường nằm ở PMI, đơn hàng mới và vốn đăng ký mới.' },
+      { id: 'c', text: 'Dự báo toàn cầu sai vì số liệu FDI của Việt Nam tốt.', explain: 'Một chỉ số của một nước không bác bỏ được dự báo toàn cầu; hai số liệu đo những thứ khác nhau với độ trễ khác nhau.' },
+    ],
+  },
+  sources: [
+    { title: 'Global Economic Prospects', publisher: 'World Bank', url: 'https://www.worldbank.org/en/publication/global-economic-prospects' },
+    { title: 'Asian Development Outlook', publisher: 'Asian Development Bank', url: 'https://www.adb.org/outlook' },
+    { title: 'Vietnam Overview', publisher: 'World Bank', url: 'https://www.worldbank.org/en/country/vietnam/overview' },
+    { title: 'Cục Thống kê – Bộ Tài chính', publisher: 'Cục Thống kê', url: 'https://www.nso.gov.vn' },
+  ],
+  origin: 'curated',
+  asOf: '2026-10-07',
+}

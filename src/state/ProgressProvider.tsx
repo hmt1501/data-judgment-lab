@@ -11,6 +11,7 @@ type Actions = {
   clearQuiz: (quizId: string) => void
   toggleSaved: (caseId: string) => void
   setLastSection: (caseId: string, sectionId: string) => void
+  markExplainerRead: (slug: string, title: string) => void
   updateSettings: (patch: Partial<P.Progress['settings']>) => void
   reset: () => void
 }
@@ -44,6 +45,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       clearQuiz: (q) => setProgress((p) => P.clearQuiz(p, q)),
       toggleSaved: (id) => setProgress((p) => P.toggleSaved(p, id)),
       setLastSection: (id, s) => setProgress((p) => P.setLastSection(p, id, s)),
+      markExplainerRead: (slug, title) => setProgress((p) => P.markExplainerRead(p, slug, title, now())),
       updateSettings: (patch) => setProgress((p) => P.updateSettings(p, patch)),
       reset: () => setProgress((p) => ({ ...P.emptyProgress(), settings: p.settings })),
     }),

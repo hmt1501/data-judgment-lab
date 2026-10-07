@@ -54,6 +54,8 @@ export type Block =
   | { kind: 'actions'; items: ActionItem[] }
   | { kind: 'pitfalls'; items: Pitfall[] }
 
+export type QuizBlock = Extract<Block, { kind: 'quiz' }>
+
 export type SectionKind = 'context' | 'framework' | 'analysis' | 'solution' | 'pitfalls'
 
 export type Section = { id: string; kind: SectionKind; title: string; blocks: Block[] }

@@ -1,8 +1,10 @@
 import { AlertTriangle, ArrowRight, Bookmark, BookOpen, Clock3, PartyPopper, Target } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { CaseCard } from '../components/CaseCard'
+import { ExplainerCard } from '../components/explainer/ExplainerCard'
 import { ButtonLink, Card, Pill, ProgressBar, ProgressRing, SectionTitle } from '../components/ui/primitives'
 import { cases, caseById } from '../content'
+import { curatedExplainers } from '../content/explainerLibrary'
 import { domainById, levelById, levels } from '../content/taxonomy'
 import { inProgress, levelProgress, quizStats, ratio, recommendNext, skillMastery, trapOfTheDay } from '../lib/insights'
 import { inline } from '../lib/markdown'
@@ -24,6 +26,11 @@ export function Home() {
   const weakest = [...mastery].sort((a, b) => ratio(a) - ratio(b) || b.total - a.total).slice(0, 3)
   const perLevel = levelProgress(cases, progress)
   const trap = trapOfTheDay(cases, today)
+  // 2 bài đọc nhanh chưa đọc, xoay vòng theo ngày
+  const unread = curatedExplainers.filter((e) => !progress.explainersRead[e.slug])
+  const pool = unread.length ? unread : curatedExplainers
+  const dayIndex = Math.floor(today.getTime() / 86_400_000)
+  const dailyReads = pool.length ? [0, 1].map((k) => pool[(dayIndex * 2 + k) % pool.length]).filter((e, i, arr) => arr.indexOf(e) === i) : []
   const saved = progress.saved.map(caseById).filter((c) => !!c)
 
   const resume = next && progress.lastSection[next.case.id]
@@ -146,6 +153,25 @@ export function Home() {
           </Card>
         </section>
       </div>
+
+      {dailyReads.length > 0 && (
+        <>
+          <SectionTitle
+            eyebrow="Đọc nhanh hôm nay"
+            title="Hiểu thêm một vấn đề kinh tế"
+            action={
+              <ButtonLink to="/explain" variant="ghost">
+                Tất cả bài đọc <ArrowRight size={16} />
+              </ButtonLink>
+            }
+          />
+          <div className={styles.cards}>
+            {dailyReads.map((e) => (
+              <ExplainerCard key={e.slug} e={e} />
+            ))}
+          </div>
+        </>
+      )}
 
       {trap && (
         <>

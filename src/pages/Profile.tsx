@@ -5,6 +5,7 @@ import { Button, Card, EmptyState, PageHeader, ProgressBar, SectionTitle } from 
 import { useToast } from '../components/ui/Toast'
 import { caseById, cases } from '../content'
 import { levelById } from '../content/taxonomy'
+import { aiEnabled } from '../lib/api'
 import { quizStats, ratio, skillMastery } from '../lib/insights'
 import type { Theme } from '../state/progress'
 import { useProgress } from '../state/ProgressProvider'
@@ -61,6 +62,20 @@ export function Profile() {
               ))}
             </div>
           </fieldset>
+          {aiEnabled && (
+            <label className={styles.field}>
+              <span>Mã truy cập AI</span>
+              <input
+                type="password"
+                autoComplete="off"
+                value={progress.settings.aiPasscode}
+                onChange={(e) => actions.updateSettings({ aiPasscode: e.target.value })}
+                placeholder="Chỉ cần nếu máy chủ yêu cầu"
+                maxLength={100}
+              />
+              <small className={styles.help}>Dùng cho nút “Hỏi AI” ở trang Đọc nhanh. Chỉ lưu trên trình duyệt này.</small>
+            </label>
+          )}
           <div className={styles.danger}>
             {confirmReset ? (
               <>
@@ -96,6 +111,10 @@ export function Profile() {
           <div>
             <b className="num">{progress.saved.length}</b>
             <span>case đã lưu</span>
+          </div>
+          <div>
+            <b className="num">{Object.keys(progress.explainersRead).length}</b>
+            <span>bài đọc nhanh đã đọc</span>
           </div>
         </Card>
       </div>

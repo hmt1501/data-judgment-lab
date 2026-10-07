@@ -1,0 +1,70 @@
+import type { Explainer } from '../explainer'
+
+export const emergencyFundAssetAllocation: Explainer = {
+  id: 'emergency-fund-asset-allocation',
+  slug: 'emergency-fund-asset-allocation',
+  question: 'Nên có quỹ dự phòng bao nhiêu và phân bổ tài sản cơ bản thế nào trước khi đầu tư?',
+  title: 'Quỹ dự phòng và phân bổ tài sản cơ bản: làm gì trước, làm gì sau?',
+  topic: 'personal-finance',
+  tldr: '**Quỹ dự phòng** là khoản tiền mặt/tiền gửi dễ rút để đối phó mất thu nhập hoặc chi phí bất ngờ; mốc thường được nhắc là vài tháng chi tiêu thiết yếu (SEC/Investor.gov nêu nhiều chuyên gia khuyên khoảng **6 tháng**). Thứ tự hợp lý thường là: **dự phòng → trả nợ lãi cao → bảo hiểm cơ bản → đầu tư dài hạn đa dạng hóa**. Tỷ trọng giữa các kênh tùy vào mục tiêu, thời gian và khả năng chịu biến động của từng người. Đây là kiến thức nền, không phải tư vấn tài chính cá nhân.',
+  keyPoints: [
+    '**Bao nhiêu tháng?** Tính theo **chi tiêu thiết yếu** (nhà ở, ăn uống, đi lại, trả nợ, học phí, y tế), không theo thu nhập. Thu nhập không ổn định (tự doanh, hoa hồng), một nguồn thu cho cả nhà, hoặc có người phụ thuộc → nên giữ nhiều tháng hơn.',
+    '**Để ở đâu?** Nơi an toàn, rút được nhanh, ít biến động: tiền gửi không kỳ hạn/kỳ hạn ngắn, chia nhiều sổ để rút từng phần. Không nên để quỹ dự phòng trong cổ phiếu, vàng hay BĐS vì có thể phải bán đúng lúc giá thấp. Từ 13/7/2026, hạn mức chi trả bảo hiểm tiền gửi tối đa tại một ngân hàng là **350 triệu đồng**.',
+    '**Trả nợ lãi cao trước khi đầu tư:** trả một khoản nợ thẻ tín dụng hay vay tiêu dùng lãi cao (ví dụ minh họa 20–30%/năm) tương đương một khoản "lợi nhuận chắc chắn" bằng mức lãi đó – hiếm khoản đầu tư nào vừa cao vừa ít rủi ro như vậy.',
+    '**Bảo hiểm cơ bản** (y tế, tai nạn, nhân thọ bảo vệ nếu có người phụ thuộc) chuyển rủi ro lớn, hiếm gặp sang công ty bảo hiểm, giúp quỹ dự phòng không bị "thủng" bởi một biến cố.',
+    '**Phân bổ tài sản và đa dạng hóa:** chia tiền đầu tư dài hạn giữa các nhóm tài sản (tiền gửi/trái phiếu, cổ phiếu/quỹ, vàng, BĐS...) theo mục tiêu và thời gian; trong mỗi nhóm cũng nên đa dạng. Định kỳ **tái cân bằng** để tỷ trọng không lệch quá xa kế hoạch.',
+  ],
+  causalChain: [
+    { from: 'Không có quỹ dự phòng', to: 'Biến cố buộc phải vay nóng hoặc bán tài sản', mechanism: 'Mất việc, ốm đau hay sửa nhà đột xuất cần tiền ngay; không có tiền mặt thì phải vay lãi cao hoặc bán khoản đầu tư.' },
+    { from: 'Biến cố buộc phải vay nóng hoặc bán tài sản', to: 'Lỗ do bán đúng lúc giá thấp, nợ tăng', mechanism: 'Biến cố cá nhân thường trùng với thời kỳ kinh tế xấu, khi cổ phiếu/BĐS giảm giá và khó bán; khoản vay lãi cao làm gánh nặng tích lũy.' },
+    { from: 'Có quỹ dự phòng và bảo hiểm', to: 'Khoản đầu tư dài hạn được giữ nguyên qua biến động', mechanism: 'Chi phí bất ngờ được trả từ quỹ dự phòng hoặc bảo hiểm, không phải bán tài sản đầu tư.' },
+    { from: 'Khoản đầu tư dài hạn được giữ nguyên qua biến động', to: 'Tận dụng được lợi suất dài hạn và lãi kép', mechanism: 'Thời gian nắm giữ đủ dài giúp các khoản đầu tư có biến động có cơ hội phục hồi và tăng trưởng.' },
+    { from: 'Danh mục đa dạng hóa giữa nhiều nhóm tài sản', to: 'Giảm rủi ro mất mát lớn từ một tài sản đơn lẻ', mechanism: 'Các nhóm tài sản không biến động cùng chiều hoàn toàn; khi một nhóm giảm, nhóm khác có thể đứng giá hoặc tăng.' },
+  ],
+  vietnamImpact: [
+    { group: 'Người trẻ mới đi làm', effect: 'Xây quỹ dự phòng và tránh nợ tiêu dùng lãi cao sớm giúp có nền tảng trước khi đầu tư; thời gian dài là lợi thế cho đầu tư định kỳ.', direction: 'up' },
+    { group: 'Lao động tự do, thu nhập không ổn định', effect: 'Cần quỹ dự phòng lớn hơn mức trung bình; dễ tổn thương nếu dồn hết tiền vào tài sản kém thanh khoản như đất.', direction: 'mixed' },
+    { group: 'Gia đình đang vay mua nhà', effect: 'Khoản trả nợ có thể tăng khi hết ưu đãi lãi suất; quỹ dự phòng nên tính cả khoản trả nợ ở kịch bản lãi thả nổi cao.', direction: 'mixed' },
+    { group: 'Người dùng vay tiêu dùng, thẻ tín dụng', effect: 'Lãi suất cao làm mọi khoản đầu tư khó "thắng" chi phí nợ; ưu tiên trả nợ giúp cải thiện tài chính nhanh nhất.', direction: 'down' },
+    { group: 'Người dồn tài sản vào một kênh (BĐS hoặc vàng)', effect: 'Dễ bị ảnh hưởng nặng khi kênh đó đi xuống và khó chuyển thành tiền mặt; đa dạng hóa giảm rủi ro tập trung.', direction: 'down' },
+  ],
+  indicators: [
+    { name: 'Số tháng chi tiêu thiết yếu mà quỹ dự phòng trang trải được', why: 'Thước đo cơ bản nhất của khả năng chống chịu tài chính gia đình.', where: 'Tự tính từ sổ chi tiêu và số dư tiền gửi' },
+    { name: 'Tổng nợ trả hàng tháng / thu nhập và lãi suất từng khoản nợ', why: 'Xác định khoản nợ nào cần ưu tiên trả trước (lãi cao nhất).', where: 'Sao kê thẻ, hợp đồng vay; thông tin khoản vay trên ứng dụng ngân hàng' },
+    { name: 'Lãi suất tiền gửi kỳ hạn ngắn và CPI', why: 'Cho biết quỹ dự phòng có đang bị lạm phát bào mòn nhiều không.', where: 'Biểu lãi suất ngân hàng; Cục Thống kê' },
+    { name: 'Tỷ trọng thực tế của từng nhóm tài sản so với kế hoạch', why: 'Phát hiện danh mục lệch do biến động giá để tái cân bằng.', where: 'Tự tổng hợp từ tài khoản chứng khoán, sổ tiết kiệm, giấy tờ tài sản' },
+    { name: 'Hạn mức bảo hiểm tiền gửi', why: 'Giúp quyết định chia quỹ dự phòng ở bao nhiêu ngân hàng.', where: 'NHNN; Bảo hiểm tiền gửi Việt Nam' },
+  ],
+  counterpoints: [
+    'Con số "6 tháng" chỉ là mốc tham khảo; người có thu nhập rất ổn định và bảo hiểm tốt có thể giữ ít hơn, người tự doanh có thể cần nhiều hơn.',
+    'Giữ quá nhiều tiền mặt cũng có chi phí: lãi thực thấp làm mất cơ hội tăng trưởng dài hạn. Cân bằng giữa an toàn và tăng trưởng là lựa chọn cá nhân.',
+    'Một số khoản nợ lãi thấp (ví dụ vay mua nhà ưu đãi) không nhất thiết phải trả trước khi đầu tư; thứ tự ưu tiên phụ thuộc lãi suất cụ thể và rủi ro của từng người.',
+    'Không có tỷ lệ phân bổ "chuẩn" cho mọi người; các quy tắc kinh nghiệm theo tuổi chỉ là điểm khởi đầu. Nếu cần quyết định cụ thể, nên tham khảo chuyên gia tư vấn độc lập.',
+  ],
+  glossary: [
+    { term: 'Quỹ dự phòng', definition: 'Khoản tiền mặt hoặc tiền gửi dễ rút, dành riêng cho chi phí bất ngờ hoặc mất thu nhập.' },
+    { term: 'Chi tiêu thiết yếu', definition: 'Các khoản chi bắt buộc để duy trì cuộc sống: nhà ở, ăn uống, đi lại, y tế, trả nợ tối thiểu.' },
+    { term: 'Phân bổ tài sản', definition: 'Cách chia tiền đầu tư giữa các nhóm tài sản như tiền gửi, trái phiếu, cổ phiếu, vàng, BĐS.' },
+    { term: 'Đa dạng hóa', definition: 'Đầu tư vào nhiều tài sản khác nhau để giảm rủi ro tổng thể của danh mục.' },
+    { term: 'Tái cân bằng', definition: 'Điều chỉnh lại tỷ trọng danh mục về kế hoạch ban đầu sau khi giá các tài sản biến động.' },
+    { term: 'Khẩu vị rủi ro', definition: 'Mức độ biến động, thua lỗ tạm thời mà một người sẵn sàng và có khả năng chấp nhận.' },
+  ],
+  quiz: {
+    kind: 'quiz',
+    id: 'emergency-fund-asset-allocation-q',
+    question: 'Anh C có 100 triệu tiền nhàn rỗi, chưa có quỹ dự phòng, đang nợ thẻ tín dụng 30 triệu lãi khoảng 25%/năm, và muốn mua cổ phiếu vì "thị trường đang tốt". Thứ tự hợp lý nhất là gì?',
+    options: [
+      { id: 'a', text: 'Dồn cả 100 triệu vào cổ phiếu, khi có lãi sẽ trả nợ thẻ.', explain: 'Lợi nhuận cổ phiếu không chắc chắn, trong khi lãi thẻ 25%/năm là chi phí chắc chắn; nếu thị trường giảm và có biến cố, anh C phải bán lỗ trong khi nợ vẫn tăng.' },
+      { id: 'b', text: 'Trả hết nợ thẻ, dùng phần còn lại xây quỹ dự phòng; chỉ đầu tư khi đã đủ quỹ dự phòng và có bảo hiểm cơ bản.', correct: true, explain: 'Đúng. Trả nợ lãi 25% tương đương lợi nhuận chắc chắn 25%; quỹ dự phòng giúp sau này không phải bán khoản đầu tư khi có biến cố. Khi nền tảng đã vững, đầu tư dài hạn và đa dạng hóa mới phát huy tác dụng.' },
+      { id: 'c', text: 'Gửi tiết kiệm cả 100 triệu để hưởng lãi, giữ nguyên nợ thẻ.', explain: 'Lãi tiết kiệm thấp hơn nhiều so với lãi thẻ 25%; giữ nợ trong khi có tiền gửi là chịu chênh lệch lãi âm mỗi tháng.' },
+    ],
+  },
+  sources: [
+    { title: '12 Saving and Investing Tips (Investor Bulletin)', publisher: 'Investor.gov (U.S. SEC)', url: 'https://www.investor.gov/introduction-investing/general-resources/news-alerts/alerts-bulletins/investor-bulletins/12-saving' },
+    { title: 'Asset Allocation and Diversification', publisher: 'Investor.gov (U.S. SEC)', url: 'https://www.investor.gov/introduction-investing/investing-basics/glossary/beginners-guide-asset-allocation-diversification' },
+    { title: 'An essential guide to building an emergency fund', publisher: 'Consumer Financial Protection Bureau', url: 'https://www.consumerfinance.gov/an-essential-guide-to-building-an-emergency-fund/' },
+    { title: 'Nâng hạn mức trả bảo hiểm tiền gửi tối đa lên 350 triệu đồng từ ngày 13/7/2026', publisher: 'Thị trường Tài chính Tiền tệ', url: 'https://thitruongtaichinhtiente.vn/nang-han-muc-tra-bao-hiem-tien-gui-toi-da-len-350-trieu-dong-tu-ngay-13-7-2026-84306.html' },
+  ],
+  origin: 'curated',
+  asOf: '2026-10-07',
+}
