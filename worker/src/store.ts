@@ -13,6 +13,11 @@ export interface Store {
   /** cộng `delta` (mặc định 1, âm = hoàn lượt) vào bộ đếm, atomic; trả về giá trị mới */
   bumpUsage(day: string, key: string, delta?: number): Promise<number>
   getUsage(day: string, key: string): Promise<number>
+  /** đồng bộ tiến độ: `hash` = sha256 của mã, `data` = JSON tiến độ */
+  createProfile(hash: string, data: string, now: Date): Promise<void>
+  getProfile(hash: string): Promise<{ data: string; rev: number } | null>
+  /** cập nhật nếu `rev` hiện tại = `baseRev` (atomic); trả rev mới, null khi lệch phiên bản hoặc không có */
+  updateProfile(hash: string, data: string, baseRev: number, now: Date): Promise<number | null>
 }
 
 const summary = (e: Explainer): ExplainerSummary => ({
@@ -104,6 +109,25 @@ export class D1Store implements Store {
   async getUsage(day: string, key: string) {
     const row = await this.db.prepare('SELECT count FROM usage WHERE day = ? AND key = ?').bind(day, key).first<{ count: number }>()
     return row?.count ?? 0
+  }
+
+  async createProfile(hash: string, data: string, now: Date) {
+    await this.db
+      .prepare('INSERT INTO sync_profiles (code_hash, data, rev, created_at, updated_at) VALUES (?, ?, 1, ?, ?)')
+      .bind(hash, data, now.toISOString(), now.toISOString())
+      .run()
+  }
+
+  async getProfile(hash: string) {
+    return this.db.prepare('SELECT data, rev FROM sync_profiles WHERE code_hash = ?').bind(hash).first<{ data: string; rev: number }>()
+  }
+
+  async updateProfile(hash: string, data: string, baseRev: number, now: Date) {
+    const row = await this.db
+      .prepare('UPDATE sync_profiles SET data = ?, rev = rev + 1, updated_at = ? WHERE code_hash = ? AND rev = ? RETURNING rev')
+      .bind(data, now.toISOString(), hash, baseRev)
+      .first<{ rev: number }>()
+    return row?.rev ?? null
   }
 }
 

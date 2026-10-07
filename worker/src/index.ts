@@ -3,10 +3,9 @@ import { groqChat } from './groq'
 import { retrieve } from './retrieve'
 import { D1Store } from './store'
 
-const randomSuffix = () => {
-  const bytes = crypto.getRandomValues(new Uint8Array(3))
-  return [...bytes].map((b) => b.toString(16).padStart(2, '0')).join('')
-}
+const randomBytes = (n: number) => crypto.getRandomValues(new Uint8Array(n))
+
+const randomSuffix = () => [...randomBytes(3)].map((b) => b.toString(16).padStart(2, '0')).join('')
 
 export default {
   async fetch(request, env): Promise<Response> {
@@ -22,9 +21,12 @@ export default {
         chatModel: env.CHAT_MODEL,
         chatDailyLimit: Number(env.CHAT_DAILY_LIMIT) || 200,
         chatDailyLimitPerIp: Number(env.CHAT_DAILY_LIMIT_PER_IP) || 40,
+        syncCreateDaily: Number(env.SYNC_CREATE_DAILY) || 500,
+        syncCreatePerIp: Number(env.SYNC_CREATE_PER_IP) || 10,
       },
       now: () => new Date(),
       randomSuffix,
+      randomBytes,
     })
   },
 } satisfies ExportedHandler<Env>

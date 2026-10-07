@@ -38,6 +38,8 @@ Theme: `html[data-theme="light" | "dark"]`; khi không đặt, theo `prefers-col
 
 - `ChatBubble` (`src/components/chat`): nút tròn 56px góc dưới phải (`--brand`), khung chat 400px (mobile: full chiều ngang trừ gutter 16px). Bôi đen chữ trong bài → hiện nút "Hỏi AI về đoạn đã chọn". Chỉ hiện khi bản build bật AI. Luôn có dòng nhắc "AI có thể sai".
 
+- `SyncCard` (`src/components/sync`): mã đồng bộ hiển thị monospace, chia 4 nhóm; luôn kèm cảnh báo giữ kín mã; tắt đồng bộ cần xác nhận.
+
 ## Bố cục
 
 - ≥ 1024px: sidebar 248px + nội dung. Trang case: cột đọc + mục lục sticky 240px.

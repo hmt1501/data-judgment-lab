@@ -5,7 +5,7 @@
 - **Thư viện case**: bài giải mẫu (worked example) với dữ liệu mô phỏng, lời giải theo best practice, trắc nghiệm ở các điểm quyết định, bẫy thường gặp và nguồn tham khảo thật.
 - **Đọc nhanh**: bài giải thích ngắn về kinh tế, đầu tư, bất động sản, thương mại — chuỗi nhân quả, tác động tới Việt Nam, chỉ số nên theo dõi, nguồn. Có thể **hỏi AI** để tạo bài mới (backend trong `worker/`, xem [worker/README.md](worker/README.md)).
 
-Tiến độ lưu trong trình duyệt.
+Tiến độ lưu trong trình duyệt; bật **đồng bộ** (trang Hồ sơ) để nhận mã và học tiếp trên thiết bị khác.
 
 ## Chạy trên máy
 

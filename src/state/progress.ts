@@ -72,6 +72,31 @@ export function updateSettings(p: Progress, patch: Partial<Progress['settings']>
   return { ...p, settings: { ...p.settings, ...patch } }
 }
 
+/**
+ * Gộp tiến độ hai thiết bị (đồng bộ khi cả hai cùng có thay đổi): hợp mọi mục; trùng thì ưu tiên `local`.
+ * Lịch sử lấy lần mở mới nhất của mỗi case. Giao diện sáng/tối là cài đặt riêng từng máy, luôn giữ của `local`.
+ */
+export function mergeProgress(local: Progress, remote: Progress): Progress {
+  const latest = new Map<string, HistoryEntry>()
+  for (const h of [...local.history, ...remote.history]) {
+    const seen = latest.get(h.caseId)
+    if (!seen || h.openedAt > seen.openedAt) latest.set(h.caseId, h)
+  }
+  return {
+    version: 2,
+    completed: { ...remote.completed, ...local.completed },
+    quiz: { ...remote.quiz, ...local.quiz },
+    saved: [...local.saved, ...remote.saved.filter((id) => !local.saved.includes(id))],
+    history: [...latest.values()].sort((a, b) => (a.openedAt < b.openedAt ? 1 : a.openedAt > b.openedAt ? -1 : 0)).slice(0, HISTORY_LIMIT),
+    lastSection: { ...remote.lastSection, ...local.lastSection },
+    explainersRead: { ...remote.explainersRead, ...local.explainersRead },
+    settings: { name: local.settings.name.trim() ? local.settings.name : remote.settings.name, theme: local.settings.theme },
+  }
+}
+
+/** Nhận bản từ thiết bị khác nguyên vẹn, chỉ giữ giao diện sáng/tối của máy này. */
+export const adoptRemote = (local: Progress, remote: Progress): Progress => ({ ...remote, settings: { ...remote.settings, theme: local.settings.theme } })
+
 /** Bỏ các id không còn tồn tại (case bị xóa/đổi tên). */
 export function sanitize(p: Progress, caseIds: Set<string>, quizIds: Set<string>): Progress {
   const keep = <T,>(rec: Record<string, T>, ok: Set<string>) =>

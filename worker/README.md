@@ -5,6 +5,9 @@ Backend cho tính năng **Đọc nhanh → Hỏi AI**. Nhận câu hỏi, tra c�
 ```
 POST /api/explain        { question }  → bài mới (201) hoặc bài đã có (200, cached)
 POST /api/chat           { messages, context?, quote? } → { reply }   (bong bóng "Hỏi nhanh AI")
+POST /api/sync           { progress }            → { code, rev }  tạo mã đồng bộ tiến độ
+GET  /api/sync           Bearer <mã>             → { progress, rev }
+PUT  /api/sync           Bearer <mã> { progress, baseRev } → { rev } · 409 { progress, rev } khi thiết bị khác đã ghi trước
 GET  /api/explainers?q=&topic=         → danh sách bài AI
 GET  /api/explainers/:slug             → chi tiết
 GET  /api/health
@@ -20,6 +23,8 @@ Có cache câu hỏi, cache tư liệu 6 giờ, quota `DAILY_LIMIT` / `DAILY_LIM
 Quota được **giữ chỗ trước** khi gọi AI (request song song không vượt giới hạn); Groq từ chối (rate limit, sai key, lỗi dịch vụ) thì hoàn lượt.
 
 **Hỏi nhanh** (`src/chat.ts`): 1 lần gọi `CHAT_MODEL` (mặc định `openai/gpt-oss-20b`, nhanh và rẻ hơn), gửi kèm ngữ cảnh trang + đoạn người dùng bôi đen; hội thoại không lưu ở server. Quota riêng `CHAT_DAILY_LIMIT` / `CHAT_DAILY_LIMIT_PER_IP`.
+
+**Đồng bộ tiến độ**: server chỉ lưu tiến độ (≤ 64 KB) theo `sha256` của mã + số phiên bản `rev`; việc gộp do client làm. Giới hạn tạo mã `SYNC_CREATE_DAILY` / `SYNC_CREATE_PER_IP`. Cần migration `0002_sync.sql`.
 
 Lưu ý: RSS của Bing News và Google News chỉ dành cho dùng cá nhân, phi thương mại.
 

@@ -1,8 +1,9 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { cases } from '../content'
 import { quizIds } from '../content/validate'
-import { browserStorage, clearLegacy, loadProgress, saveProgress } from './storage'
 import * as P from './progress'
+import { browserStorage, clearLegacy, loadProgress, parseProgress, saveProgress } from './storage'
+import { useSync, type SyncActions, type SyncInfo } from './useSync'
 
 type Actions = {
   open: (caseId: string) => void
@@ -13,14 +14,16 @@ type Actions = {
   setLastSection: (caseId: string, sectionId: string) => void
   markExplainerRead: (slug: string, title: string) => void
   updateSettings: (patch: Partial<P.Progress['settings']>) => void
+  /** xóa tiến độ; đang đồng bộ thì xóa trên mọi thiết bị */
   reset: () => void
-}
+} & SyncActions
 
-const ProgressContext = createContext<{ progress: P.Progress; actions: Actions } | null>(null)
+const ProgressContext = createContext<{ progress: P.Progress; actions: Actions; sync: SyncInfo } | null>(null)
 
 const knownCases = new Set(cases.map((c) => c.id))
 const knownQuizzes = new Set(cases.flatMap(quizIds))
 const now = () => new Date().toISOString()
+const cleanRemote = (raw: unknown) => P.sanitize(parseProgress(raw) ?? P.emptyProgress(), knownCases, knownQuizzes)
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState(() => P.sanitize(loadProgress(browserStorage()), knownCases, knownQuizzes))
@@ -28,6 +31,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     saveProgress(browserStorage(), progress)
   }, [progress])
+
+  const { sync, syncActions } = useSync(progress, setProgress, cleanRemote)
 
   useEffect(() => clearLegacy(browserStorage()), [])
 
@@ -47,12 +52,16 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       setLastSection: (id, s) => setProgress((p) => P.setLastSection(p, id, s)),
       markExplainerRead: (slug, title) => setProgress((p) => P.markExplainerRead(p, slug, title, now())),
       updateSettings: (patch) => setProgress((p) => P.updateSettings(p, patch)),
-      reset: () => setProgress((p) => ({ ...P.emptyProgress(), settings: p.settings })),
+      reset: () => {
+        setProgress((p) => ({ ...P.emptyProgress(), settings: p.settings }))
+        syncActions.markReplace()
+      },
+      ...syncActions,
     }),
-    [],
+    [syncActions],
   )
 
-  const value = useMemo(() => ({ progress, actions }), [progress, actions])
+  const value = useMemo(() => ({ progress, actions, sync }), [progress, actions, sync])
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>
 }
 

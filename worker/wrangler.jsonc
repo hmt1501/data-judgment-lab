@@ -23,7 +23,10 @@
     // Hỏi nhanh (bong bóng chat): model nhỏ, nhanh; quota lượt hỏi mỗi ngày (toàn hệ thống / mỗi IP)
     "CHAT_MODEL": "openai/gpt-oss-20b",
     "CHAT_DAILY_LIMIT": "200",
-    "CHAT_DAILY_LIMIT_PER_IP": "40"
+    "CHAT_DAILY_LIMIT_PER_IP": "40",
+    // đồng bộ tiến độ: số mã đồng bộ được tạo mỗi ngày (toàn hệ thống / mỗi IP)
+    "SYNC_CREATE_DAILY": "500",
+    "SYNC_CREATE_PER_IP": "10"
   },
   "secrets": {
     "required": ["GROQ_API_KEY"]

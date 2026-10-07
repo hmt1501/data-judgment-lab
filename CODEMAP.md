@@ -9,7 +9,7 @@ Bản đồ code cho agent/dev. Cập nhật file này khi thêm/di chuyển fil
                   ▼                                  ▼                                  ▼
 src/ (React SPA, hash router) ──fetch──▶ worker/ (Cloudflare Worker + D1) ──▶ Groq + Bing News RSS + Wikipedia
   nội dung: src/content/** (bundle sẵn)        bài AI lưu trong D1
-  tiến độ: localStorage (djl:v2)
+  tiến độ: localStorage (djl:v2), đồng bộ giữa thiết bị qua mã (djl:sync ↔ D1 sync_profiles)
 scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để soạn nháp case → drafts/
 ```
 
@@ -25,6 +25,7 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 | `explainer.ts` | kiểu `Explainer`, `ExplainerSummary`, `QuizBlock`; `EXPLAINER_LIMITS`; `validateExplainer` (dùng cho cả JSON AI không tin cậy) |
 | `text.ts` | `foldVi` (bỏ dấu, chữ thường), `slugify` |
 | `chat.ts` | kiểu `ChatInput`/`ChatTurn`, `CHAT_LIMITS`, `parseChatInput` (kiểm tra body chat ở cả hai phía) |
+| `sync.ts` | mã đồng bộ base32 Crockford 16 ký tự: `encodeSyncCode`, `normalizeSyncCode`, `formatSyncCode`; `SYNC_LIMITS` |
 
 ### `src/` — frontend
 | Đường dẫn | Nội dung |
@@ -40,17 +41,20 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 | `components/explainer/` | `ExplainerView` (trang bài), `ExplainerCard` (thẻ) |
 | `components/CaseCard.tsx` | thẻ case trong thư viện |
 | `components/chat/ChatBubble.tsx` | bong bóng Hỏi nhanh AI: hội thoại trong bộ nhớ (mất khi tải lại), tự gửi kèm ngữ cảnh trang + đoạn đang bôi đen trong `#main` |
+| `components/sync/SyncCard.tsx` | thẻ "Học tiếp trên thiết bị khác" ở trang Hồ sơ: bật đồng bộ, nhập mã, sao chép, tắt |
 | `components/chat/pageContext.ts` | dựng mô tả trang đang đọc (case + phần hiện tại / bài Đọc nhanh) gửi kèm câu hỏi |
 | `content/types.ts` | kiểu `CaseStudy`, `Section`, `Block` (discriminated union) |
 | `content/validate.ts` | `validateCase`, `quizIds` |
 | `content/index.ts` | `cases` (glob `cases/*.ts`, sắp theo cấp → tên), `caseById` |
 | `content/explainerLibrary.ts` | `curatedExplainers` (glob `explainers/*.ts`), `curatedBySlug` |
 | `content/cases/`, `content/explainers/` | dữ liệu; tự xuất hiện trong app khi thêm file |
-| `state/progress.ts` | kiểu `Progress` (v2) + reducer thuần (`markOpened`, `setCompleted`, `answerQuiz`, `sanitize`…) |
-| `state/ProgressProvider.tsx` | context `useProgress()` → `{ progress, actions }`; lưu khi đổi; áp theme |
-| `state/storage.ts` | đọc/ghi localStorage `djl:v2` (kiểm tra kiểu từng trường, bỏ mục hỏng), migrate từ v1 (`djl-done`…) |
+| `state/progress.ts` | kiểu `Progress` (v2) + reducer thuần (`markOpened`, `setCompleted`, `answerQuiz`, `sanitize`…), `mergeProgress` / `adoptRemote` cho đồng bộ |
+| `state/ProgressProvider.tsx` | context `useProgress()` → `{ progress, actions, sync }`; lưu khi đổi; áp theme |
+| `state/useSync.ts` | vòng đồng bộ: chạy khi mở app, quay lại tab, 2s sau thay đổi cuối, rời trang (keepalive); phân biệt thay đổi của người dùng (`dirty`) với bản từ server |
+| `state/sync.ts` | `syncStep` thuần: kéo/đẩy một lượt, xử lý 409 bằng gộp (hoặc ghi đè khi `replace`) |
+| `state/storage.ts` | đọc/ghi localStorage `djl:v2` (kiểm tra kiểu từng trường, bỏ mục hỏng; `parseProgress` cho dữ liệu server), migrate từ v1 (`djl-done`…); `djl:sync` = `{ code, rev, dirty, replace? }` |
 | `state/insights.ts` | số liệu suy ra: tiến độ cấp độ/kỹ năng, `recommendNext`, `trapOfTheDay`, `quizStats`, `localDayIndex` |
-| `lib/api.ts` | client Worker: `listAiExplainers`, `getAiExplainer`, `askAi`, `askChat`, `ApiError`, `describeError` |
+| `lib/api.ts` | client Worker: `listAiExplainers`, `getAiExplainer`, `askAi`, `askChat`, `createSync`/`pullSync`/`pushSync`, `ApiError` (có `body`), `describeError`; `apiEnabled` |
 | `lib/search.ts` | `searchCases`, `searchExplainers` (không dấu, cache theo object) |
 | `lib/markdown.tsx` | markdown tối giản an toàn: `**đậm**`, `*nghiêng*`, `` `code` ``, `[link](https://…)`, đoạn cách dòng trống |
 | `lib/useToday.ts` | ngày hiện tại, tự đổi lúc 0h |
@@ -62,13 +66,14 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 |---|---|
 | `src/index.ts` | entry: dựng `Deps` thật từ `env` |
 | `src/app.ts` | `handle(request, deps)`: CORS, route, quota ngày (`reserve`: giữ chỗ trước khi gọi AI, hoàn lượt khi Groq từ chối), map lỗi → HTTP |
+| `/api/sync` (trong `app.ts`) | POST tạo mã · GET/PUT với `authorization: Bearer <mã>`; PUT cần `baseRev`, lệch → 409 kèm bản mới nhất; D1 chỉ lưu `sha256` của mã |
 | `src/chat.ts` | Hỏi nhanh: system prompt trợ giảng + `chatReply` (model `CHAT_MODEL`, không JSON schema) |
 | `src/retrieve.ts` | tra cứu có giới hạn: Bing News RSS (dự phòng Google News) + Wikipedia; ≤ 5.000 ký tự |
 | `src/pipeline.ts` | `compose` (1 lần gọi Groq, JSON schema strict) → `toExplainer` (lọc nguồn theo index, validate) |
 | `src/prompts.ts` | system prompt + JSON schema + kiểu `Composed` |
 | `src/groq.ts` | client Groq tối giản, `GroqError` |
 | `src/store.ts` | interface `Store` + `D1Store` (explainers, FTS5, research_cache, usage) |
-| `migrations/` | schema D1 (chỉ thêm file mới). Bảng `usage`: key `global`/`ip:…` cho tạo bài, `chat:global`/`chat:ip:…` cho hỏi nhanh |
+| `migrations/` | schema D1 (chỉ thêm file mới). Bảng `usage`: key `global`/`ip:…` cho tạo bài, `chat:…` hỏi nhanh, `sync:…` tạo mã đồng bộ. `sync_profiles`: tiến độ theo mã |
 | `test/` | `app.test.ts` (store giả), `d1.test.ts` (D1 cục bộ), `retrieve.test.ts` |
 
 ### Khác
@@ -80,6 +85,7 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 - **Mở case:** `CaseReader` → `actions.open` (history) → IntersectionObserver cập nhật `lastSection` → nút "Đánh dấu đã học" → `recommendNext` gợi ý bài sau.
 - **Hỏi AI:** `Explain.tsx` → `POST /api/explain` → cache theo câu hỏi chuẩn hóa → kiểm quota → `retrieve` (cache 6h) → `compose` → `toExplainer` → D1 → điều hướng `/explain/:slug`.
 - **Hỏi nhanh:** `ChatBubble` → `POST /api/chat` `{ messages, context, quote }` → `parseChatInput` → giữ chỗ quota `chat:` → `chatReply` → `{ reply }` (render bằng `Markdown`, giữ xuống dòng).
+- **Đồng bộ:** thao tác → `dirty` → 2s sau `syncStep` đẩy `PUT {progress, baseRev}`; 409 → `mergeProgress` → đẩy lại. Không có thay đổi → `GET`; server mới hơn → `adoptRemote` (thay local, giữ theme). "Xóa tiến độ" khi đang đồng bộ → `replace` (ghi đè, không gộp).
 - **Khởi động:** `loadProgress` → `sanitize` bỏ id case/quiz không còn tồn tại (quiz id kết thúc `-q` của explainer luôn được giữ).
 
 ## Muốn sửa X thì vào đâu
@@ -92,12 +98,14 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 | Thêm loại block | `src/content/types.ts` → `Block.tsx` → `validate.ts` (nếu có ràng buộc) → `DESIGN.md` |
 | Đổi luật bài AI | `shared/explainer.ts` (`EXPLAINER_LIMITS`, validate) + `worker/src/prompts.ts` cho khớp |
 | Đổi giới hạn quota/model/CORS | `worker/wrangler.jsonc` → `vars`, rồi `cd worker && npm run types` |
+| Thêm trường mới vào `Progress` | `progress.ts` (kiểu + `emptyProgress` + **`mergeProgress`**) → `storage.ts` (`fromStored`) → test đồng bộ |
 | Đổi cách AI trả lời trong bong bóng chat | `worker/src/chat.ts` (`CHAT_SYSTEM`); gợi ý câu hỏi: `suggestionsFor` trong `ChatBubble.tsx` |
 
 ## Bẫy đã biết / nợ kỹ thuật
 
 - Nội dung bundle eager → `index-*.js` ~950 KB. Khi nội dung tăng gấp đôi: tách thân bài theo route (ghi chú trong `vite.config.ts`).
 - Quota tính theo **lượt gọi AI** (kể cả khi AI trả nội dung sai chuẩn), chỉ hoàn lượt khi Groq từ chối request. Bộ đếm ngày theo UTC (reset 7h sáng giờ VN).
+- Đồng bộ: hai máy cùng sửa khi offline sẽ được gộp kiểu "hợp" — thao tác xóa (bỏ lưu, bỏ hoàn thành) ở một máy có thể bị máy kia khôi phục. Mất mã = mất đường đồng bộ (không có tài khoản để khôi phục). Chưa dọn hồ sơ lâu không dùng.
 - Bong bóng chat chỉ bắt đoạn bôi đen bên trong `#main` (nội dung trang), không bắt trong sidebar hay chính khung chat.
 - Bong bóng chat dùng `body:has([data-chat-fab])` để chừa chỗ cho toast và cuối trang — cần trình duyệt hỗ trợ `:has()`.
 - RSS Bing/Google News chỉ dành cho dùng cá nhân, phi thương mại.

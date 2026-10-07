@@ -21,7 +21,7 @@ const nav = [
 const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform)
 
 export function AppShell() {
-  const { progress } = useProgress()
+  const { progress, sync } = useProgress()
   const [drawer, setDrawer] = useState(false)
   const [palette, setPalette] = useState(false)
   const location = useLocation()
@@ -92,7 +92,9 @@ export function AppShell() {
           </div>
           <ProgressBar value={done / cases.length} label="Tiến độ thư viện" />
         </div>
-        <p className={styles.sideNote}>Tiến độ lưu trên trình duyệt này. Toàn bộ số liệu trong case là mô phỏng.</p>
+        <p className={styles.sideNote}>
+          {sync.code ? 'Tiến độ được đồng bộ giữa các thiết bị.' : 'Tiến độ lưu trên trình duyệt này.'} Toàn bộ số liệu trong case là mô phỏng.
+        </p>
       </aside>
       {drawer && <button className={styles.scrim} aria-label="Đóng menu" onClick={() => setDrawer(false)} />}
 

@@ -36,6 +36,19 @@ class MemoryStore implements Store {
   async getUsage(day: string, key: string) {
     return this.usage.get(`${day}|${key}`) ?? 0
   }
+  profiles = new Map<string, { data: string; rev: number }>()
+  async createProfile(hash: string, data: string) {
+    this.profiles.set(hash, { data, rev: 1 })
+  }
+  async getProfile(hash: string) {
+    return this.profiles.get(hash) ?? null
+  }
+  async updateProfile(hash: string, data: string, baseRev: number) {
+    const cur = this.profiles.get(hash)
+    if (!cur || cur.rev !== baseRev) return null
+    this.profiles.set(hash, { data, rev: cur.rev + 1 })
+    return cur.rev + 1
+  }
 }
 
 const composed = (over: Partial<Composed> = {}): Composed => ({
@@ -106,9 +119,10 @@ function setup(over: Partial<Deps> = {}, configOver: Partial<Deps['config']> = {
     store,
     chat,
     retrieve,
-    config: { allowedOrigins: ['https://hmt1501.github.io', 'http://localhost:*'], dailyLimit: 20, dailyLimitPerIp: 8, model: 'openai/gpt-oss-120b', chatModel: 'openai/gpt-oss-20b', chatDailyLimit: 200, chatDailyLimitPerIp: 2, ...configOver },
+    config: { allowedOrigins: ['https://hmt1501.github.io', 'http://localhost:*'], dailyLimit: 20, dailyLimitPerIp: 8, model: 'openai/gpt-oss-120b', chatModel: 'openai/gpt-oss-20b', chatDailyLimit: 200, chatDailyLimitPerIp: 2, syncCreateDaily: 100, syncCreatePerIp: 2, ...configOver },
     now: () => NOW,
     randomSuffix: () => 'abc123',
+    randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
     ...over,
   }
   return { deps, store, chat: (over.chat ?? chat) as ReturnType<typeof fakeChat>, retrieve: (over.retrieve ?? retrieve) as ReturnType<typeof fakeRetrieve> }
@@ -287,6 +301,70 @@ describe('POST /api/chat', () => {
     expect((await chatReq(other.deps, question)).status).toBe(429)
     expect(await other.store.getUsage('2026-10-07', 'chat:global')).toBe(0)
     expect(await store.getUsage('2026-10-07', 'chat:global')).toBe(2)
+  })
+})
+
+const syncReq = (deps: Deps, method: string, opts: { code?: string; body?: unknown } = {}) =>
+  handle(
+    new Request('https://api.test/api/sync', {
+      method,
+      headers: {
+        'content-type': 'application/json',
+        origin: 'https://hmt1501.github.io',
+        'cf-connecting-ip': '1.2.3.4',
+        ...(opts.code ? { authorization: `Bearer ${opts.code}` } : {}),
+      },
+      body: opts.body === undefined ? undefined : JSON.stringify(opts.body),
+    }),
+    deps,
+  )
+
+const progressV2 = (saved: string[]) => ({ version: 2, completed: {}, quiz: {}, saved, history: [], lastSection: {}, explainersRead: {}, settings: { name: '', theme: 'system' } })
+
+describe('/api/sync', () => {
+  it('tạo mã → đọc lại; mã gõ thường/có gạch vẫn nhận; D1 không lưu mã gốc', async () => {
+    const { deps, store } = setup()
+    const created = await syncReq(deps, 'POST', { body: { progress: progressV2(['a']) } })
+    expect(created.status).toBe(201)
+    const { code, rev } = (await created.json()) as { code: string; rev: number }
+    expect(code).toMatch(/^[0-9A-HJKMNP-TV-Z]{16}$/)
+    expect(rev).toBe(1)
+    expect([...store.profiles.keys()][0]).not.toContain(code)
+
+    const typed = code.toLowerCase().replace(/(.{4})/g, '$1-')
+    const got = await syncReq(deps, 'GET', { code: typed })
+    expect(got.status).toBe(200)
+    expect(got.headers.get('cache-control')).toBe('no-store')
+    expect(((await got.json()) as { progress: { saved: string[] } }).progress.saved).toEqual(['a'])
+  })
+
+  it('PUT đúng baseRev → rev mới; baseRev cũ → 409 kèm bản mới nhất', async () => {
+    const { deps } = setup()
+    const { code } = (await (await syncReq(deps, 'POST', { body: { progress: progressV2([]) } })).json()) as { code: string }
+    const ok = await syncReq(deps, 'PUT', { code, body: { progress: progressV2(['b']), baseRev: 1 } })
+    expect(((await ok.json()) as { rev: number }).rev).toBe(2)
+    const stale = await syncReq(deps, 'PUT', { code, body: { progress: progressV2(['c']), baseRev: 1 } })
+    expect(stale.status).toBe(409)
+    const body = (await stale.json()) as { rev: number; progress: { saved: string[] } }
+    expect(body).toMatchObject({ rev: 2, progress: { saved: ['b'] } })
+  })
+
+  it('mã sai/không có → 400/404; dữ liệu sai hoặc quá lớn → 400/413; tạo quá nhiều mã → 429', async () => {
+    const { deps } = setup()
+    expect((await syncReq(deps, 'GET')).status).toBe(400)
+    expect((await syncReq(deps, 'GET', { code: '0000-0000-0000-0000' })).status).toBe(404)
+    expect((await syncReq(deps, 'POST', { body: { progress: { version: 1 } } })).status).toBe(400)
+    expect((await syncReq(deps, 'POST', { body: { progress: progressV2(['x'.repeat(70_000)]) } })).status).toBe(413)
+    expect((await syncReq(deps, 'POST', { body: { progress: progressV2([]) } })).status).toBe(201)
+    expect((await syncReq(deps, 'POST', { body: { progress: progressV2([]) } })).status).toBe(201)
+    expect((await syncReq(deps, 'POST', { body: { progress: progressV2([]) } })).status).toBe(429)
+  })
+
+  it('CORS preflight cho PUT + authorization', async () => {
+    const { deps } = setup()
+    const res = await handle(new Request('https://api.test/api/sync', { method: 'OPTIONS', headers: { origin: 'https://hmt1501.github.io' } }), deps)
+    expect(res.headers.get('access-control-allow-methods')).toContain('PUT')
+    expect(res.headers.get('access-control-allow-headers')).toContain('authorization')
   })
 })
 

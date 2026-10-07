@@ -18,6 +18,7 @@ afterAll(async () => {
   await proxy.env.DB.prepare('DELETE FROM explainers_fts WHERE slug LIKE ?').bind(`%-${run}`).run()
   await proxy.env.DB.prepare('DELETE FROM usage WHERE day = ?').bind(`test-${run}`).run()
   await proxy.env.DB.prepare('DELETE FROM research_cache WHERE norm_question = ?').bind(`r ${run}`).run()
+  await proxy.env.DB.prepare('DELETE FROM sync_profiles WHERE code_hash = ?').bind(`h-${run}`).run()
   await proxy.dispose()
 })
 
@@ -50,5 +51,15 @@ describe('D1Store', () => {
     await store.putResearch(`r ${run}`, { notes: 'n', sources: [{ title: 'A', url: 'https://a.org' }] }, t0)
     expect((await store.getResearch(`r ${run}`, 3_600_000, new Date(t0.getTime() + 1000)))?.sources).toHaveLength(1)
     expect(await store.getResearch(`r ${run}`, 3_600_000, new Date(t0.getTime() + 7_200_000))).toBeNull()
+  })
+
+  it('sync_profiles: tạo, đọc, cập nhật chỉ khi đúng rev', async () => {
+    const t = new Date('2026-10-07T00:00:00Z')
+    await store.createProfile(`h-${run}`, '{"v":1}', t)
+    expect(await store.getProfile(`h-${run}`)).toEqual({ data: '{"v":1}', rev: 1 })
+    expect(await store.updateProfile(`h-${run}`, '{"v":2}', 1, t)).toBe(2)
+    expect(await store.updateProfile(`h-${run}`, '{"v":3}', 1, t)).toBeNull()
+    expect(await store.getProfile(`h-${run}`)).toEqual({ data: '{"v":2}', rev: 2 })
+    expect(await store.getProfile('khong-co')).toBeNull()
   })
 })

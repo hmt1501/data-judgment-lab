@@ -1,4 +1,5 @@
 import { parseChatInput } from '../../shared/chat'
+import { encodeSyncCode, normalizeSyncCode, SYNC_LIMITS } from '../../shared/sync'
 import { isTopicId } from '../../shared/taxonomy'
 import { chatReply } from './chat'
 import { GroqError, type Chat } from './groq'
@@ -14,6 +15,9 @@ export type Config = {
   chatModel: string
   chatDailyLimit: number
   chatDailyLimitPerIp: number
+  /** giới hạn số mã đồng bộ tạo mới mỗi ngày */
+  syncCreateDaily: number
+  syncCreatePerIp: number
 }
 
 export type Deps = {
@@ -24,6 +28,7 @@ export type Deps = {
   config: Config
   now: () => Date
   randomSuffix: () => string
+  randomBytes: (n: number) => Uint8Array
 }
 
 const MAX_QUESTION = 300
@@ -38,8 +43,8 @@ function corsHeaders(origin: string | null, allowed: string[]): Record<string, s
   if (!originAllowed(origin, allowed)) return {}
   return {
     'access-control-allow-origin': origin!,
-    'access-control-allow-methods': 'GET, POST, OPTIONS',
-    'access-control-allow-headers': 'content-type',
+    'access-control-allow-methods': 'GET, POST, PUT, OPTIONS',
+    'access-control-allow-headers': 'content-type, authorization',
     'access-control-expose-headers': 'retry-after',
     'access-control-max-age': '86400',
     vary: 'origin',
@@ -48,6 +53,31 @@ function corsHeaders(origin: string | null, allowed: string[]): Record<string, s
 
 async function sha256(text: string): Promise<ArrayBuffer> {
   return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
+}
+
+const hex = (buf: ArrayBuffer) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('')
+
+/** Khóa lưu trong D1 cho một mã đồng bộ (không lưu mã gốc). */
+export const syncKey = async (code: string) => hex(await sha256(`djl-sync:${code}`))
+
+/** Mã đồng bộ từ header `authorization: Bearer <mã>` (không đặt trong URL để khỏi lọt vào log). */
+const bearerCode = (request: Request) => normalizeSyncCode(request.headers.get('authorization')?.replace(/^Bearer\s+/i, '') ?? '')
+
+/** Đọc `{ progress, baseRev? }`; progress phải là object `version: 2` và không quá SYNC_LIMITS.bytes. */
+async function readSyncBody(request: Request): Promise<{ data: string; baseRev?: number } | { status: number; message: string }> {
+  const raw = await request.text()
+  if (raw.length > SYNC_LIMITS.bytes * 2) return { status: 413, message: 'Dữ liệu tiến độ quá lớn.' }
+  let body: { progress?: unknown; baseRev?: unknown }
+  try {
+    body = JSON.parse(raw) as typeof body
+  } catch {
+    return { status: 400, message: 'Dữ liệu không hợp lệ.' }
+  }
+  const p = body?.progress as { version?: unknown } | undefined
+  if (typeof p !== 'object' || p === null || Array.isArray(p) || p.version !== 2) return { status: 400, message: 'Tiến độ sai định dạng.' }
+  const data = JSON.stringify(p)
+  if (new TextEncoder().encode(data).length > SYNC_LIMITS.bytes) return { status: 413, message: 'Dữ liệu tiến độ quá lớn.' }
+  return { data, baseRev: Number.isInteger(body.baseRev) ? (body.baseRev as number) : undefined }
 }
 
 async function ipKey(request: Request): Promise<string> {
@@ -134,6 +164,38 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
         if (!reply) return fail(502, 'empty_reply', 'AI chưa trả lời được. Hãy hỏi lại theo cách khác.')
         return json({ reply })
       })
+    }
+
+    if (path === '/api/sync') {
+      const now = deps.now()
+      if (request.method === 'POST') {
+        const body = await readSyncBody(request)
+        if ('status' in body) return fail(body.status, 'bad_request', body.message)
+        const quota = await reserve(deps.store, now.toISOString().slice(0, 10), await ipKey(request), 'sync:', config.syncCreatePerIp, config.syncCreateDaily)
+        if (!quota.ok) return fail(429, 'daily_limit', 'Đã tạo quá nhiều mã đồng bộ hôm nay. Hãy thử lại vào ngày mai.', { 'retry-after': String(secondsUntilMidnightUtc(now)) })
+        const code = encodeSyncCode(deps.randomBytes(10))
+        await deps.store.createProfile(await syncKey(code), body.data, now)
+        return json({ code, rev: 1 }, 201)
+      }
+
+      if (request.method === 'GET' || request.method === 'PUT') {
+        const code = bearerCode(request)
+        if (!code) return fail(400, 'bad_code', 'Mã đồng bộ không đúng định dạng.')
+        const key = await syncKey(code)
+        const noStore = { 'cache-control': 'no-store' }
+        const current = await deps.store.getProfile(key)
+        if (!current) return fail(404, 'sync_not_found', 'Không tìm thấy mã đồng bộ này. Kiểm tra lại mã.')
+        if (request.method === 'GET') return json({ progress: JSON.parse(current.data), rev: current.rev }, 200, noStore)
+
+        const body = await readSyncBody(request)
+        if ('status' in body) return fail(body.status, 'bad_request', body.message)
+        if (body.baseRev === undefined) return fail(400, 'bad_request', 'Thiếu "baseRev".')
+        const rev = await deps.store.updateProfile(key, body.data, body.baseRev, now)
+        if (rev !== null) return json({ rev }, 200, noStore)
+        // thiết bị khác đã ghi trước: trả bản mới nhất để client gộp rồi gửi lại
+        const latest = (await deps.store.getProfile(key))!
+        return json({ error: { code: 'conflict', message: 'Tiến độ vừa được cập nhật từ thiết bị khác.' }, progress: JSON.parse(latest.data), rev: latest.rev }, 409, noStore)
+      }
     }
 
     return fail(404, 'not_found', 'Không có endpoint này.')

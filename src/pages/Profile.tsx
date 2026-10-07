@@ -1,9 +1,11 @@
 import { ArrowRight, BookOpen, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { SyncCard } from '../components/sync/SyncCard'
 import { Button, Card, EmptyState, PageHeader, ProgressBar, SectionTitle } from '../components/ui/primitives'
 import { useToast } from '../components/ui/Toast'
 import { caseById, cases } from '../content'
+import { apiEnabled } from '../lib/api'
 import { levelById } from '../../shared/taxonomy'
 import { quizStats, ratio, skillMastery } from '../state/insights'
 import type { Theme } from '../state/progress'
@@ -19,7 +21,7 @@ const themes: { id: Theme; label: string }[] = [
 const fmtDate = (iso: string) => new Date(iso).toLocaleDateString('vi-VN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
 
 export function Profile() {
-  const { progress, actions } = useProgress()
+  const { progress, actions, sync } = useProgress()
   const toast = useToast()
   const [confirmReset, setConfirmReset] = useState(false)
   const done = Object.keys(progress.completed).length
@@ -36,7 +38,11 @@ export function Profile() {
 
   return (
     <div>
-      <PageHeader eyebrow="Hồ sơ" title="Hồ sơ & cài đặt" desc="Mọi dữ liệu học tập được lưu trong trình duyệt này, không gửi đi đâu." />
+      <PageHeader
+        eyebrow="Hồ sơ"
+        title="Hồ sơ & cài đặt"
+        desc={sync.code ? 'Tiến độ học lưu trong trình duyệt và được đồng bộ qua máy chủ bằng mã của bạn.' : 'Tiến độ học lưu trong trình duyệt này, không gửi đi đâu.'}
+      />
 
       <div className={styles.top}>
         <Card className={styles.settings}>
@@ -64,7 +70,7 @@ export function Profile() {
           <div className={styles.danger}>
             {confirmReset ? (
               <>
-                <span>Xóa hết case đã học, câu trả lời và lịch sử?</span>
+                <span>Xóa hết case đã học, câu trả lời và lịch sử{sync.code ? ' trên mọi thiết bị đang đồng bộ' : ''}?</span>
                 <Button size="sm" variant="primary" onClick={reset}>
                   Xóa
                 </Button>
@@ -103,6 +109,13 @@ export function Profile() {
           </div>
         </Card>
       </div>
+
+      {apiEnabled && (
+        <>
+          <SectionTitle eyebrow="Đồng bộ" title="Học tiếp trên thiết bị khác" />
+          <SyncCard />
+        </>
+      )}
 
       <SectionTitle eyebrow="Kỹ năng" title="Mức độ đã luyện" />
       <Card className={styles.skills}>
