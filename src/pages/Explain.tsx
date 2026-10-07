@@ -7,7 +7,7 @@ import { useToast } from '../components/ui/Toast'
 import { curatedExplainers, searchExplainers } from '../content/explainerLibrary'
 import { isTopicId, topics } from '../content/taxonomy'
 import { aiEnabled, askAi, describeError, listAiExplainers, type ExplainerSummary } from '../lib/api'
-import { useProgress } from '../state/ProgressProvider'
+import { useSearchParamState } from '../lib/useSearchParamState'
 import styles from './Explain.module.css'
 
 const examples = [
@@ -20,11 +20,10 @@ const examples = [
 const stages = ['Đang tra cứu nguồn trên web…', 'Đang đọc và chọn lọc dữ kiện…', 'Đang biên soạn bài…']
 
 export function ExplainPage() {
-  const { progress } = useProgress()
   const toast = useToast()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const q = params.get('q') ?? ''
+  const [q, setQ] = useSearchParamState('q')
   const rawTopic = params.get('topic') ?? ''
   const topic = isTopicId(rawTopic) ? rawTopic : ''
 
@@ -73,7 +72,7 @@ export function ExplainPage() {
     setStage(0)
     setAskError('')
     try {
-      const { explainer, cached } = await askAi(q.trim(), progress.settings.aiPasscode)
+      const { explainer, cached } = await askAi(q.trim())
       if (cached) toast('Câu hỏi này đã có bài — mở bài có sẵn.')
       navigate(`/explain/${explainer.slug}`)
     } catch (err) {
@@ -99,14 +98,14 @@ export function ExplainPage() {
           <input
             ref={inputRef}
             value={q}
-            onChange={(e) => set('q', e.target.value)}
+            onChange={(e) => setQ(e.target.value)}
             placeholder="Ví dụ: Vì sao Fed tăng lãi suất lại ảnh hưởng tới Việt Nam?"
             aria-label="Câu hỏi hoặc từ khóa"
             maxLength={300}
             disabled={asking}
           />
           {q && !asking && (
-            <button type="button" aria-label="Xóa" onClick={() => (set('q', ''), inputRef.current?.focus())}>
+            <button type="button" aria-label="Xóa" onClick={() => (setQ(''), inputRef.current?.focus())}>
               <X size={18} />
             </button>
           )}
@@ -136,7 +135,7 @@ export function ExplainPage() {
       {!q && (
         <div className={styles.examples}>
           {examples.map((ex) => (
-            <button key={ex} type="button" onClick={() => set('q', ex)}>
+            <button key={ex} type="button" onClick={() => setQ(ex)}>
               {ex}
             </button>
           ))}

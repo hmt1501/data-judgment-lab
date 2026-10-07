@@ -45,10 +45,10 @@ export const listAiExplainers = (opts: { q?: string; topic?: string } = {}) => {
 
 export const getAiExplainer = (slug: string) => request<Explainer>(`/api/explainers/${encodeURIComponent(slug)}`)
 
-export const askAi = (question: string, passcode: string) =>
+export const askAi = (question: string) =>
   request<{ explainer: Explainer; cached: boolean }>('/api/explain', {
     method: 'POST',
-    headers: { 'content-type': 'application/json', ...(passcode ? { 'x-passcode': passcode } : {}) },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ question }),
   })
 

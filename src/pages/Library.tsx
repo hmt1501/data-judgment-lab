@@ -6,6 +6,7 @@ import { Button, EmptyState, PageHeader } from '../components/ui/primitives'
 import { cases } from '../content'
 import { domains, isSkillId, levels, skillById, skills } from '../content/taxonomy'
 import { searchCases } from '../lib/search'
+import { useSearchParamState } from '../lib/useSearchParamState'
 import { useProgress } from '../state/ProgressProvider'
 import styles from './Library.module.css'
 
@@ -22,7 +23,7 @@ const usedSkills = skills.filter((s) => cases.some((c) => c.skills.includes(s.id
 export function Library() {
   const { progress } = useProgress()
   const [params, setParams] = useSearchParams()
-  const q = params.get('q') ?? ''
+  const [q, setQ] = useSearchParamState('q')
   const level = params.get('level') ?? ''
   const domain = params.get('domain') ?? ''
   const status = params.get('status') ?? ''
@@ -55,6 +56,11 @@ export function Library() {
     })
   }, [q, level, domain, status, skill, progress])
 
+  const clearAll = () => {
+    setQ('')
+    setParams({}, { replace: true })
+  }
+
   const filtered = q || level || domain || status || skill
 
   return (
@@ -68,9 +74,9 @@ export function Library() {
       <div className={styles.tools}>
         <label className={styles.search}>
           <Search size={20} aria-hidden />
-          <input value={q} onChange={(e) => set('q', e.target.value)} placeholder="Tìm theo tên, kỹ năng, lĩnh vực…" aria-label="Tìm case" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Tìm theo tên, kỹ năng, lĩnh vực…" aria-label="Tìm case" />
           {q && (
-            <button aria-label="Xóa từ khóa" onClick={() => set('q', '')}>
+            <button aria-label="Xóa từ khóa" onClick={() => setQ('')}>
               <X size={18} />
             </button>
           )}
@@ -113,7 +119,7 @@ export function Library() {
           {results.length} / {cases.length} case{skill && ` · kỹ năng “${skillById(skill).name}”`}
         </span>
         {filtered && (
-          <Button variant="ghost" size="sm" onClick={() => setParams({}, { replace: true })}>
+          <Button variant="ghost" size="sm" onClick={clearAll}>
             Xóa bộ lọc
           </Button>
         )}
@@ -131,7 +137,7 @@ export function Library() {
           title="Không có case phù hợp"
           desc="Thử từ khóa khác (không cần gõ dấu) hoặc bỏ bớt bộ lọc."
           action={
-            <Button variant="secondary" onClick={() => setParams({}, { replace: true })}>
+            <Button variant="secondary" onClick={clearAll}>
               Xóa bộ lọc
             </Button>
           }

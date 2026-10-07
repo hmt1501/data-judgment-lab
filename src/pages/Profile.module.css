@@ -202,8 +202,3 @@
     padding: var(--sp-1) var(--sp-4);
   }
 }
-
-.help {
-  font-size: var(--fs-xs);
-  color: var(--text-subtle);
-}

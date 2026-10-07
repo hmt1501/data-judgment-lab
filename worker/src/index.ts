@@ -16,7 +16,6 @@ export default {
         allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
         dailyLimit: Number(env.DAILY_LIMIT) || 20,
         dailyLimitPerIp: Number(env.DAILY_LIMIT_PER_IP) || 8,
-        passcode: env.APP_PASSCODE || undefined,
         model: env.GROQ_MODEL,
       },
       now: () => new Date(),

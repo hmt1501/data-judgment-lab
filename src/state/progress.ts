@@ -15,7 +15,7 @@ export type Progress = {
   lastSection: Record<string, string>
   /** slug → bài "Đọc nhanh" đã đọc (lưu cả tiêu đề vì bài AI không có sẵn trong bundle) */
   explainersRead: Record<string, { title: string; at: string }>
-  settings: { name: string; theme: Theme; aiPasscode: string }
+  settings: { name: string; theme: Theme }
 }
 
 export const HISTORY_LIMIT = 20
@@ -28,7 +28,7 @@ export const emptyProgress = (): Progress => ({
   history: [],
   lastSection: {},
   explainersRead: {},
-  settings: { name: '', theme: 'system', aiPasscode: '' },
+  settings: { name: '', theme: 'system' },
 })
 
 export function markOpened(p: Progress, caseId: string, now: string): Progress {

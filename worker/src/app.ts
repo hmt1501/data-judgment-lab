@@ -7,7 +7,6 @@ export type Config = {
   allowedOrigins: string[]
   dailyLimit: number
   dailyLimitPerIp: number
-  passcode?: string
   model: string
 }
 
@@ -32,7 +31,7 @@ function corsHeaders(origin: string | null, allowed: string[]): Record<string, s
   return {
     'access-control-allow-origin': origin!,
     'access-control-allow-methods': 'GET, POST, OPTIONS',
-    'access-control-allow-headers': 'content-type, x-passcode',
+    'access-control-allow-headers': 'content-type',
     'access-control-expose-headers': 'retry-after',
     'access-control-max-age': '86400',
     vary: 'origin',
@@ -41,16 +40,6 @@ function corsHeaders(origin: string | null, allowed: string[]): Record<string, s
 
 async function sha256(text: string): Promise<ArrayBuffer> {
   return crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))
-}
-
-/** So sánh hằng thời gian: băm trước để hai bên cùng 32 byte, rồi XOR toàn bộ (không thoát sớm). */
-async function safeEqual(a: string, b: string): Promise<boolean> {
-  const [ha, hb] = await Promise.all([sha256(a), sha256(b)])
-  const x = new Uint8Array(ha)
-  const y = new Uint8Array(hb)
-  let diff = 0
-  for (let i = 0; i < x.length; i++) diff |= x[i] ^ y[i]
-  return diff === 0
 }
 
 async function ipKey(request: Request): Promise<string> {
@@ -73,7 +62,7 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
   const path = url.pathname.replace(/\/+$/, '')
 
   try {
-    if (request.method === 'GET' && path === '/api/health') return json({ ok: true, ai: true, passcodeRequired: !!config.passcode })
+    if (request.method === 'GET' && path === '/api/health') return json({ ok: true, ai: true })
 
     if (request.method === 'GET' && path === '/api/explainers') {
       const q = url.searchParams.get('q')?.trim().slice(0, 100) || undefined
@@ -90,9 +79,6 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
     }
 
     if (request.method === 'POST' && path === '/api/explain') {
-      if (config.passcode && !(await safeEqual(request.headers.get('x-passcode') ?? '', config.passcode)))
-        return fail(401, 'passcode', 'Cần mã truy cập AI hợp lệ (nhập trong trang Hồ sơ & cài đặt).')
-
       const body = (await request.json().catch(() => null)) as { question?: unknown } | null
       const question = typeof body?.question === 'string' ? body.question.trim().replace(/\s+/g, ' ') : ''
       if (question.length < 8) return fail(400, 'too_short', 'Câu hỏi quá ngắn.')

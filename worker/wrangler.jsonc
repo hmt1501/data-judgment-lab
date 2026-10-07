@@ -22,7 +22,6 @@
     "GROQ_MODEL": "openai/gpt-oss-120b"
   },
   "secrets": {
-    // APP_PASSCODE: để trống/không đặt = không yêu cầu mã
     "required": ["GROQ_API_KEY"]
   }
 }

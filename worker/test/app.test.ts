@@ -139,12 +139,6 @@ describe('POST /api/explain', () => {
     expect(chat.calls).toHaveLength(2)
   })
 
-  it('yêu cầu passcode khi được cấu hình', async () => {
-    const { deps } = setup({}, { passcode: 'bi-mat' })
-    expect((await ask(deps, 'Giá vàng vì sao tăng mạnh?')).status).toBe(401)
-    expect((await ask(deps, 'Giá vàng vì sao tăng mạnh?', { 'x-passcode': 'bi-mat' })).status).toBe(201)
-  })
-
   it('hết quota ngày → 429 có retry-after', async () => {
     const { deps, store } = setup({}, { dailyLimit: 1 })
     await store.bumpUsage('2026-10-07', 'global')
