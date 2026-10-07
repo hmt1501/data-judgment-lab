@@ -19,17 +19,21 @@ Giới hạn free tier (8K token/phút) → có cache câu hỏi, cache ghi chú
 ## Cài đặt lần đầu (làm một lần)
 
 1. Tạo API key tại https://console.groq.com/keys
-2. ```sh
+2. Tạo file `worker/.secrets.prod` (đã gitignore, **không commit**) với nội dung:
+   ```
+   GROQ_API_KEY=<key Groq của bạn>
+   APP_PASSCODE=<mã tùy chọn, khuyên dùng>
+   ```
+3. ```sh
    cd worker
    npm ci
-   npx wrangler login                       # đăng nhập Cloudflare (mở trình duyệt)
-   npx wrangler deploy                      # tạo Worker + tự tạo D1 "data-judgment-lab"
+   npx wrangler login                                   # đăng nhập Cloudflare (mở trình duyệt)
+   npx wrangler deploy --secrets-file .secrets.prod     # lần đầu: tạo Worker + D1 kèm secret
    npx wrangler d1 migrations apply data-judgment-lab --remote
-   npx wrangler secret put GROQ_API_KEY     # dán key Groq
-   npx wrangler secret put APP_PASSCODE     # (khuyên dùng) mã để chỉ bạn gọi được AI
    ```
-3. Lấy URL Worker (dạng `https://data-judgment-lab-api.<tên>.workers.dev`) và đặt vào GitHub: **Settings → Secrets and variables → Actions → Variables → `VITE_API_BASE`**. Chạy lại workflow để frontend bật nút "Hỏi AI".
-4. Nếu đặt `APP_PASSCODE`: nhập mã tại trang **Hồ sơ & cài đặt** trên web.
+   Sau đó có thể xóa `.secrets.prod`. Đổi key về sau: `npx wrangler secret put GROQ_API_KEY`.
+4. Lấy URL Worker (dạng `https://data-judgment-lab-api.<tên>.workers.dev`) và đặt vào GitHub: **Settings → Secrets and variables → Actions → Variables → `VITE_API_BASE`**. Chạy lại workflow để frontend bật nút "Hỏi AI".
+5. Nếu đặt `APP_PASSCODE`: nhập mã tại trang **Hồ sơ & cài đặt** trên web.
 
 Tự deploy Worker từ GitHub Actions (tùy chọn): thêm secrets `CLOUDFLARE_API_TOKEN` (quyền *Edit Cloudflare Workers* + *D1*) và `CLOUDFLARE_ACCOUNT_ID`.
 
