@@ -8,15 +8,14 @@ export type ChatRequest = {
   max_completion_tokens?: number
   reasoning_effort?: 'low' | 'medium' | 'high'
   temperature?: number
-  tools?: { type: 'browser_search' }[]
-  tool_choice?: 'auto' | 'required' | 'none'
   response_format?: { type: 'json_schema'; json_schema: { name: string; strict: boolean; schema: object } }
 }
 
-/** Phần phản hồi ta dùng; các trường tool không được Groq tài liệu hóa chi tiết nên để `unknown`. */
+export type Usage = { prompt_tokens: number; completion_tokens: number; total_tokens: number }
+
 export type ChatResult = {
   content: string
-  executedTools: unknown
+  usage?: Usage
 }
 
 export class GroqError extends Error {
@@ -32,7 +31,8 @@ export class GroqError extends Error {
 export type Chat = (req: ChatRequest) => Promise<ChatResult>
 
 type RawResponse = {
-  choices?: { message?: { content?: string | null; executed_tools?: unknown } }[]
+  choices?: { message?: { content?: string | null } }[]
+  usage?: Usage
   error?: { message?: string }
 }
 
@@ -48,7 +48,6 @@ export function groqChat(apiKey: string, fetchImpl: typeof fetch = fetch): Chat 
       const retry = Number(res.headers.get('retry-after'))
       throw new GroqError(res.status, body.error?.message ?? `Groq HTTP ${res.status}`, Number.isFinite(retry) && retry > 0 ? retry : undefined)
     }
-    const message = body.choices?.[0]?.message
-    return { content: message?.content ?? '', executedTools: message?.executed_tools }
+    return { content: body.choices?.[0]?.message?.content ?? '', usage: body.usage }
   }
 }

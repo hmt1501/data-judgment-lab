@@ -1,6 +1,6 @@
 import { isTopicId } from '../../src/content/taxonomy'
 import { GroqError, type Chat } from './groq'
-import { compose, normalizeQuestion, PipelineError, research, toExplainer } from './pipeline'
+import { compose, normalizeQuestion, PipelineError, toExplainer, type Research } from './pipeline'
 import type { Store } from './store'
 
 export type Config = {
@@ -13,6 +13,8 @@ export type Config = {
 export type Deps = {
   store: Store
   chat: Chat
+  /** tra cứu tư liệu (tin + Wikipedia) có giới hạn kích thước */
+  retrieve: (question: string) => Promise<Research>
   config: Config
   now: () => Date
   randomSuffix: () => string
@@ -97,7 +99,8 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
 
       let r = await deps.store.getResearch(norm, RESEARCH_TTL_MS, now)
       if (!r) {
-        r = await research(deps.chat, config.model, question)
+        r = await deps.retrieve(question)
+        if (!r.sources.length) throw new PipelineError('no_sources', 'Không tìm được tư liệu cho câu hỏi này. Hãy thử diễn đạt cụ thể hơn.')
         await deps.store.putResearch(norm, r, now)
       }
       const composed = await compose(deps.chat, config.model, question, r)

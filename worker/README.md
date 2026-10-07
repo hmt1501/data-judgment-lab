@@ -9,12 +9,14 @@ GET  /api/explainers/:slug             → chi tiết
 GET  /api/health
 ```
 
-Pipeline 2 bước (Groq không cho dùng `browser_search` cùng structured outputs):
-1. **Tra cứu**: `browser_search` → ghi chú + danh sách nguồn thật.
-2. **Biên soạn**: JSON schema strict; AI chỉ được chọn nguồn **theo số thứ tự** trong danh sách ở bước 1 (không tự viết URL).
-Kết quả được kiểm tra bằng `validateExplainer` (dùng chung với frontend, `src/content/explainer.ts`).
+Luồng xử lý (≈ 6–8K token/câu, vừa giới hạn free tier 8K token/phút):
+1. **Tra cứu gọn** (`src/retrieve.ts`, không tốn token AI): 5 tin mới nhất từ Google News RSS + tóm tắt Wikipedia, cắt cứng còn ≤ 5.000 ký tự.
+   Không dùng `browser_search` của Groq: model tự mở nguyên trang web, đo thực tế 16K–112K token/câu.
+2. **Biên soạn**: 1 lần gọi `gpt-oss-120b` với JSON schema strict; AI chỉ được chọn nguồn **theo số thứ tự** trong danh sách tra cứu (không tự viết URL). Kết quả kiểm tra bằng `validateExplainer` (dùng chung với frontend).
 
-Giới hạn free tier (8K token/phút) → có cache câu hỏi, cache ghi chú 6 giờ, quota `DAILY_LIMIT` / `DAILY_LIMIT_PER_IP`, và trả `429 + retry-after`.
+Có cache câu hỏi, cache tư liệu 6 giờ, quota `DAILY_LIMIT` / `DAILY_LIMIT_PER_IP`, trả `429 + retry-after`, và log `groq_usage` (số token mỗi lần gọi) trong Workers Logs.
+
+Lưu ý: điều khoản Google News RSS chỉ cho phép dùng cá nhân, phi thương mại.
 
 ## Cài đặt lần đầu (làm một lần)
 

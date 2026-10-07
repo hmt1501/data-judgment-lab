@@ -1,5 +1,6 @@
 import { handle } from './app'
 import { groqChat } from './groq'
+import { retrieve } from './retrieve'
 import { D1Store } from './store'
 
 const randomSuffix = () => {
@@ -12,6 +13,7 @@ export default {
     return handle(request, {
       store: new D1Store(env.DB),
       chat: groqChat(env.GROQ_API_KEY),
+      retrieve: (q) => retrieve(q),
       config: {
         allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
         dailyLimit: Number(env.DAILY_LIMIT) || 20,

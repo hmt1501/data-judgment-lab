@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { Explainer } from '../../src/content/explainer'
 import { handle, originAllowed, type Deps } from '../src/app'
 import { GroqError, groqChat, type Chat, type ChatRequest } from '../src/groq'
-import { extractSources, normalizeQuestion, type Research } from '../src/pipeline'
+import { normalizeQuestion, type Research } from '../src/pipeline'
 import type { Composed } from '../src/prompts'
 import { summary, type Store } from '../src/store'
 
@@ -70,18 +70,28 @@ const composed = (over: Partial<Composed> = {}): Composed => ({
   ...over,
 })
 
-type Script = (req: ChatRequest) => Promise<{ content: string; executedTools: unknown }>
-
 function fakeChat(composeOver: Partial<Composed> = {}): Chat & { calls: ChatRequest[] } {
   const calls: ChatRequest[] = []
-  const fn: Script = async (req) => {
+  const fn: Chat = async (req) => {
     calls.push(req)
-    if (req.tools)
-      return {
-        content: 'Ghi chú…\nNGUỒN: FOMC | https://www.federalreserve.gov/monetarypolicy/fomc.htm',
-        executedTools: [{ type: 'browser_search', search_results: { results: [{ title: 'World Bank VN', url: 'https://www.worldbank.org/en/country/vietnam' }] } }],
-      }
-    return { content: JSON.stringify(composed(composeOver)), executedTools: undefined }
+    return { content: JSON.stringify(composed(composeOver)), usage: { prompt_tokens: 4000, completion_tokens: 2000, total_tokens: 6000 } }
+  }
+  return Object.assign(fn, { calls })
+}
+
+const research: Research = {
+  notes: '- [Tin 2026-10-01] Fed giữ lãi suất (VnExpress)\n- [Wikipedia vi] Cục Dự trữ Liên bang: …',
+  sources: [
+    { title: 'World Bank VN', url: 'https://www.worldbank.org/en/country/vietnam' },
+    { title: 'FOMC', url: 'https://www.federalreserve.gov/monetarypolicy/fomc.htm' },
+  ],
+}
+
+function fakeRetrieve(r: Research = research) {
+  const calls: string[] = []
+  const fn = async (q: string) => {
+    calls.push(q)
+    return r
   }
   return Object.assign(fn, { calls })
 }
@@ -91,15 +101,17 @@ const NOW = new Date('2026-10-07T03:00:00Z')
 function setup(over: Partial<Deps> = {}, configOver: Partial<Deps['config']> = {}) {
   const store = new MemoryStore()
   const chat = fakeChat()
+  const retrieve = fakeRetrieve()
   const deps: Deps = {
     store,
     chat,
+    retrieve,
     config: { allowedOrigins: ['https://hmt1501.github.io', 'http://localhost:*'], dailyLimit: 20, dailyLimitPerIp: 8, model: 'openai/gpt-oss-120b', ...configOver },
     now: () => NOW,
     randomSuffix: () => 'abc123',
     ...over,
   }
-  return { deps, store, chat: (over.chat ?? chat) as ReturnType<typeof fakeChat> }
+  return { deps, store, chat: (over.chat ?? chat) as ReturnType<typeof fakeChat>, retrieve: (over.retrieve ?? retrieve) as ReturnType<typeof fakeRetrieve> }
 }
 
 const ask = (deps: Deps, question: string, headers: Record<string, string> = {}) =>
@@ -113,8 +125,8 @@ const ask = (deps: Deps, question: string, headers: Record<string, string> = {})
   )
 
 describe('POST /api/explain', () => {
-  it('chạy 2 bước, chỉ giữ nguồn có thật, lưu và trả về', async () => {
-    const { deps, store, chat } = setup()
+  it('tra cứu gọn + 1 lần gọi AI, chỉ giữ nguồn có thật, lưu và trả về', async () => {
+    const { deps, store, chat, retrieve } = setup()
     const res = await ask(deps, 'Fed tăng lãi suất ảnh hưởng gì tới Việt Nam?')
     expect(res.status).toBe(201)
     expect(res.headers.get('access-control-allow-origin')).toBe('https://hmt1501.github.io')
@@ -124,8 +136,10 @@ describe('POST /api/explain', () => {
     // index 9 không tồn tại → bị bỏ; index 2 = nguồn thứ 2 đã tra cứu
     expect(explainer.sources.map((s) => s.url)).toEqual(['https://www.federalreserve.gov/monetarypolicy/fomc.htm'])
     expect(explainer.quiz.options.filter((o) => o.correct)).toHaveLength(1)
-    expect(chat.calls[0].tools).toEqual([{ type: 'browser_search' }])
-    expect(chat.calls[1].response_format?.json_schema.strict).toBe(true)
+    expect(retrieve.calls).toEqual(['Fed tăng lãi suất ảnh hưởng gì tới Việt Nam?'])
+    expect(chat.calls).toHaveLength(1)
+    expect(chat.calls[0].response_format?.json_schema.strict).toBe(true)
+    expect(chat.calls[0].messages[1].content).toContain('Fed giữ lãi suất')
     expect(store.explainers).toHaveLength(1)
     expect(await store.getUsage('2026-10-07', 'global')).toBe(1)
   })
@@ -136,7 +150,7 @@ describe('POST /api/explain', () => {
     const res = await ask(deps, '  fed TANG lai suat anh huong gi toi viet nam ')
     expect(res.status).toBe(200)
     expect(((await res.json()) as { cached: boolean }).cached).toBe(true)
-    expect(chat.calls).toHaveLength(2)
+    expect(chat.calls).toHaveLength(1)
   })
 
   it('hết quota ngày → 429 có retry-after', async () => {
@@ -147,19 +161,34 @@ describe('POST /api/explain', () => {
     expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0)
   })
 
-  it('Groq 429 → 429 kèm retry-after; ghi chú nghiên cứu được giữ để thử lại', async () => {
-    const calls: ChatRequest[] = []
-    const chat: Chat = async (req) => {
-      calls.push(req)
-      if (req.tools) return { content: 'NGUỒN: A | https://example.org/a', executedTools: undefined }
+  it('Groq 429 → 429 kèm retry-after; tư liệu được giữ để thử lại không phải tra cứu lại', async () => {
+    const chat: Chat = async () => {
       throw new GroqError(429, 'rate limit', 42)
     }
-    const { deps, store } = setup({ chat })
+    const { deps, store, retrieve } = setup({ chat })
     const res = await ask(deps, 'Tỷ giá USD/VND được điều hành thế nào?')
     expect(res.status).toBe(429)
     expect(res.headers.get('retry-after')).toBe('42')
     expect(store.research.size).toBe(1)
     expect(await store.getUsage('2026-10-07', 'global')).toBe(0)
+    await ask(deps, 'Tỷ giá USD/VND được điều hành thế nào?')
+    expect(retrieve.calls).toHaveLength(1)
+  })
+
+  it('không tìm được tư liệu → 502 no_sources, không gọi AI', async () => {
+    const { deps, chat } = setup({ retrieve: fakeRetrieve({ notes: '', sources: [] }) })
+    const res = await ask(deps, 'Câu hỏi rất lạ không có kết quả?')
+    expect(res.status).toBe(502)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('no_sources')
+    expect(chat.calls).toHaveLength(0)
+  })
+
+  it('key Groq sai → 503 ai_config', async () => {
+    const chat: Chat = async () => {
+      throw new GroqError(401, 'Invalid API Key')
+    }
+    const { deps } = setup({ chat })
+    expect((await ask(deps, 'Giá vàng vì sao tăng mạnh?')).status).toBe(503)
   })
 
   it('ngoài phạm vi → 422; câu hỏi quá ngắn → 400', async () => {
@@ -200,15 +229,6 @@ describe('GET & CORS', () => {
 describe('tiện ích', () => {
   it('normalizeQuestion bỏ dấu và ký tự đặc biệt', () => {
     expect(normalizeQuestion('  Đồng USD tăng 5%?! ')).toBe('dong usd tang 5%')
-  })
-
-  it('extractSources gom URL từ tool lồng nhau và dòng NGUỒN, bỏ http và trùng', () => {
-    const tools = { a: [{ deep: { url: 'https://a.org/x', title: 'A' } }, { url: 'http://insecure.org' }] }
-    const notes = 'NGUỒN: B | https://b.org/y.\nxem thêm https://a.org/x'
-    expect(extractSources(tools, notes)).toEqual([
-      { url: 'https://a.org/x', title: 'A' },
-      { url: 'https://b.org/y', title: 'B' },
-    ])
   })
 
   it('groqChat gửi bearer và ném GroqError kèm retry-after', async () => {

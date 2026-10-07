@@ -6,6 +6,7 @@
  *     --brief "Churn tăng sau khi đổi giá gói năm; phân biệt churn tự nguyện và thanh toán thất bại"
  *
  * Free tier gpt-oss-120b chỉ 8K token/phút nên script gọi theo từng phần và tự chờ khi gặp 429.
+ * Nguồn tham khảo lấy từ Wikipedia; nên thay bằng tài liệu chuyên sâu hơn khi review.
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
@@ -13,7 +14,7 @@ import { domains, levels, skills } from '../src/content/taxonomy'
 import type { CaseStudy, Section } from '../src/content/types'
 import { validateCase } from '../src/content/validate'
 import { GroqError, groqChat, type ChatRequest } from '../worker/src/groq'
-import { extractSources } from '../worker/src/pipeline'
+import { retrieve } from '../worker/src/retrieve'
 
 const { values: args } = parseArgs({
   options: {
@@ -140,18 +141,8 @@ Viết { sections: [ section kind "solution" id "solution" (text kết luận + 
   3000,
 )
 
-const research = await call({
-  model,
-  messages: [
-    { role: 'system', content: 'Tìm 3–5 nguồn công khai uy tín (tài liệu chính thức, sách, blog kỹ thuật nổi tiếng) giải thích phương pháp trong case. Cuối câu trả lời liệt kê mỗi nguồn một dòng: NGUỒN: <tiêu đề> | <url>' },
-    { role: 'user', content: `${outline.title}. Kỹ năng: ${outline.skills.join(', ')}. ${brief}` },
-  ],
-  tools: [{ type: 'browser_search' }],
-  tool_choice: 'required',
-  reasoning_effort: 'low',
-  max_completion_tokens: 1500,
-})
-const candidates = extractSources(research.executedTools, research.content, 8)
+// Nguồn tham khảo: tra cứu gọn bằng Wikipedia (không dùng browser_search của Groq — quá tốn token)
+const { sources: candidates } = await retrieve(`${outline.title} ${outline.skills.join(' ')}`, fetch, { news: false, wikiLangs: ['en', 'vi'] })
 const references: CaseStudy['references'] = []
 for (const s of candidates) {
   const ok = await fetch(s.url, { redirect: 'follow', headers: { 'user-agent': 'Mozilla/5.0' } })
@@ -159,7 +150,7 @@ for (const s of candidates) {
     .catch(() => false)
   console.log(`  ${ok ? '✓' : '✗'} ${s.url}`)
   if (ok && references.length < 3)
-    references.push({ title: s.title, publisher: new URL(s.url).hostname.replace(/^www\./, ''), url: s.url, note: 'Nguồn do AI đề xuất — cần viết lại ghi chú khi review.' })
+    references.push({ title: s.title, publisher: new URL(s.url).hostname.replace(/^www\./, ''), url: s.url, note: 'Nguồn tự động từ Wikipedia — thay bằng tài liệu chuyên sâu và viết lại ghi chú khi review.' })
 }
 
 const draft = {
