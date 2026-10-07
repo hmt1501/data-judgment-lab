@@ -4,6 +4,7 @@ Backend cho tính năng **Đọc nhanh → Hỏi AI**. Nhận câu hỏi, tra c�
 
 ```
 POST /api/explain        { question }  → bài mới (201) hoặc bài đã có (200, cached)
+POST /api/chat           { messages, context?, quote? } → { reply }   (bong bóng "Hỏi nhanh AI")
 GET  /api/explainers?q=&topic=         → danh sách bài AI
 GET  /api/explainers/:slug             → chi tiết
 GET  /api/health
@@ -16,6 +17,9 @@ Luồng xử lý (≈ 6–8K token/câu, vừa giới hạn free tier 8K token/p
 2. **Biên soạn**: 1 lần gọi `gpt-oss-120b` với JSON schema strict; AI chỉ được chọn nguồn **theo số thứ tự** trong danh sách tra cứu (không tự viết URL). Kết quả kiểm tra bằng `validateExplainer` (dùng chung với frontend).
 
 Có cache câu hỏi, cache tư liệu 6 giờ, quota `DAILY_LIMIT` / `DAILY_LIMIT_PER_IP`, trả `429 + retry-after`, và log `groq_usage` (số token mỗi lần gọi) trong Workers Logs.
+Quota được **giữ chỗ trước** khi gọi AI (request song song không vượt giới hạn); Groq từ chối (rate limit, sai key, lỗi dịch vụ) thì hoàn lượt.
+
+**Hỏi nhanh** (`src/chat.ts`): 1 lần gọi `CHAT_MODEL` (mặc định `openai/gpt-oss-20b`, nhanh và rẻ hơn), gửi kèm ngữ cảnh trang + đoạn người dùng bôi đen; hội thoại không lưu ở server. Quota riêng `CHAT_DAILY_LIMIT` / `CHAT_DAILY_LIMIT_PER_IP`.
 
 Lưu ý: RSS của Bing News và Google News chỉ dành cho dùng cá nhân, phi thương mại.
 

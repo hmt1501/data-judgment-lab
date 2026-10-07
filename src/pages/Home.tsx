@@ -6,16 +6,16 @@ import { ButtonLink, Card, Pill, ProgressBar, ProgressRing, SectionTitle } from 
 import { cases, caseById } from '../content'
 import { curatedExplainers } from '../content/explainerLibrary'
 import { domainById, levelById, levels } from '../../shared/taxonomy'
-import { inProgress, levelProgress, quizStats, ratio, recommendNext, skillMastery, trapOfTheDay } from '../state/insights'
+import { inProgress, levelProgress, localDayIndex, quizStats, ratio, recommendNext, skillMastery, trapOfTheDay } from '../state/insights'
 import { inline } from '../lib/markdown'
+import { useToday } from '../lib/useToday'
 import { useProgress } from '../state/ProgressProvider'
 import styles from './Home.module.css'
 
-const today = new Date()
-const dateLabel = today.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
-
 export function Home() {
   const { progress } = useProgress()
+  const today = useToday()
+  const dateLabel = today.toLocaleDateString('vi-VN', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
   const name = progress.settings.name.trim() || 'bạn'
   const done = Object.keys(progress.completed).length
   const next = recommendNext(cases, progress)
@@ -29,7 +29,7 @@ export function Home() {
   // 2 bài đọc nhanh chưa đọc, xoay vòng theo ngày
   const unread = curatedExplainers.filter((e) => !progress.explainersRead[e.slug])
   const pool = unread.length ? unread : curatedExplainers
-  const dayIndex = Math.floor(today.getTime() / 86_400_000)
+  const dayIndex = localDayIndex(today)
   const dailyReads = pool.length ? [0, 1].map((k) => pool[(dayIndex * 2 + k) % pool.length]).filter((e, i, arr) => arr.indexOf(e) === i) : []
   const saved = progress.saved.map(caseById).filter((c) => !!c)
 

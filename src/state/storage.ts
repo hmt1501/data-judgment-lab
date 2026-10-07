@@ -1,4 +1,4 @@
-import { emptyProgress, type Progress } from './progress'
+import { emptyProgress, type HistoryEntry, type Progress, type Theme } from './progress'
 
 export const STORAGE_KEY = 'djl:v2'
 const LEGACY = { done: 'djl-done', recent: 'djl-recent', saved: 'djl-saved' }
@@ -15,6 +15,36 @@ function readJson(storage: StorageLike, key: string): unknown {
 }
 
 const isStringArray = (v: unknown): v is string[] => Array.isArray(v) && v.every((x) => typeof x === 'string')
+const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v)
+const isStr = (v: unknown): v is string => typeof v === 'string'
+
+/** Giữ các mục hợp lệ của một Record; không phải object → rỗng. */
+function recordOf<T>(v: unknown, ok: (x: unknown) => x is T): Record<string, T> {
+  return isObj(v) ? (Object.fromEntries(Object.entries(v).filter(([, x]) => ok(x))) as Record<string, T>) : {}
+}
+
+const isHistoryEntry = (h: unknown): h is HistoryEntry => isObj(h) && isStr(h.caseId) && isStr(h.openedAt)
+const isReadEntry = (v: unknown): v is { title: string; at: string } => isObj(v) && isStr(v.title) && isStr(v.at)
+const THEMES: readonly unknown[] = ['system', 'light', 'dark'] satisfies Theme[]
+
+/** Dựng lại Progress v2 từ JSON đã lưu, bỏ trường/mục sai kiểu (localStorage có thể bị sửa tay hoặc hỏng). */
+function fromStored(s: Record<string, unknown>): Progress {
+  const base = emptyProgress()
+  const settings = isObj(s.settings) ? s.settings : {}
+  return {
+    version: 2,
+    completed: recordOf(s.completed, isStr),
+    quiz: recordOf(s.quiz, isStr),
+    saved: Array.isArray(s.saved) ? s.saved.filter(isStr) : [],
+    history: Array.isArray(s.history) ? s.history.filter(isHistoryEntry) : [],
+    lastSection: recordOf(s.lastSection, isStr),
+    explainersRead: recordOf(s.explainersRead, isReadEntry),
+    settings: {
+      name: isStr(settings.name) ? settings.name : base.settings.name,
+      theme: THEMES.includes(settings.theme) ? (settings.theme as Theme) : base.settings.theme,
+    },
+  }
+}
 
 function fromLegacy(storage: StorageLike, now: string): Progress | undefined {
   const done = readJson(storage, LEGACY.done)
@@ -31,12 +61,8 @@ function fromLegacy(storage: StorageLike, now: string): Progress | undefined {
 /** Đọc tiến độ; tự chuyển từ định dạng v1 nếu có. Không bao giờ throw. */
 export function loadProgress(storage: StorageLike | undefined, now = new Date().toISOString()): Progress {
   if (!storage) return emptyProgress()
-  const stored = readJson(storage, STORAGE_KEY) as Partial<Progress> | undefined
-  if (stored && stored.version === 2) {
-    const base = emptyProgress()
-    const { name, theme } = { ...base.settings, ...stored.settings }
-    return { ...base, ...stored, explainersRead: { ...stored.explainersRead }, settings: { name, theme } }
-  }
+  const stored = readJson(storage, STORAGE_KEY)
+  if (isObj(stored) && stored.version === 2) return fromStored(stored)
   return fromLegacy(storage, now) ?? emptyProgress()
 }
 

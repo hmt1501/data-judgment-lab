@@ -33,3 +33,14 @@
     bottom: var(--sp-4);
   }
 }
+
+/* có bong bóng chat (56px) ở góc dưới phải → đặt toast lên trên nó */
+:global(body:has([data-chat-fab])) .region {
+  bottom: calc(var(--sp-5) + 56px + var(--sp-3));
+}
+
+@media (max-width: 600px) {
+  :global(body:has([data-chat-fab])) .region {
+    bottom: calc(var(--sp-4) + 56px + var(--sp-3));
+  }
+}

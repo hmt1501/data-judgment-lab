@@ -19,7 +19,11 @@
     // số bài AI tối đa mỗi ngày (toàn hệ thống) và mỗi IP
     "DAILY_LIMIT": "20",
     "DAILY_LIMIT_PER_IP": "8",
-    "GROQ_MODEL": "openai/gpt-oss-120b"
+    "GROQ_MODEL": "openai/gpt-oss-120b",
+    // Hỏi nhanh (bong bóng chat): model nhỏ, nhanh; quota lượt hỏi mỗi ngày (toàn hệ thống / mỗi IP)
+    "CHAT_MODEL": "openai/gpt-oss-20b",
+    "CHAT_DAILY_LIMIT": "200",
+    "CHAT_DAILY_LIMIT_PER_IP": "40"
   },
   "secrets": {
     "required": ["GROQ_API_KEY"]

@@ -1,4 +1,6 @@
+import { parseChatInput } from '../../shared/chat'
 import { isTopicId } from '../../shared/taxonomy'
+import { chatReply } from './chat'
 import { GroqError, type Chat } from './groq'
 import { compose, normalizeQuestion, PipelineError, toExplainer, type Research } from './pipeline'
 import type { Store } from './store'
@@ -8,6 +10,10 @@ export type Config = {
   dailyLimit: number
   dailyLimitPerIp: number
   model: string
+  /** Hỏi nhanh (bong bóng chat): model nhẹ hơn, quota riêng */
+  chatModel: string
+  chatDailyLimit: number
+  chatDailyLimitPerIp: number
 }
 
 export type Deps = {
@@ -92,25 +98,42 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
 
       const now = deps.now()
       const day = now.toISOString().slice(0, 10)
-      const ip = await ipKey(request)
-      const [globalUsed, ipUsed] = await Promise.all([deps.store.getUsage(day, 'global'), deps.store.getUsage(day, ip)])
-      if (globalUsed >= config.dailyLimit || ipUsed >= config.dailyLimitPerIp)
+      const quota = await reserve(deps.store, day, await ipKey(request), '', config.dailyLimitPerIp, config.dailyLimit)
+      if (!quota.ok)
         return fail(429, 'daily_limit', 'Đã hết lượt tạo bài AI hôm nay. Bạn vẫn đọc được các bài có sẵn.', { 'retry-after': String(secondsUntilMidnightUtc(now)) })
 
-      let r = await deps.store.getResearch(norm, RESEARCH_TTL_MS, now)
-      if (!r) {
-        r = await deps.retrieve(question)
-        // không có tư liệu → AI vẫn trả lời bằng kiến thức chung (bài không có nguồn, giao diện cảnh báo).
-        // Chỉ cache khi có tư liệu để lần sau còn tra cứu lại.
-        if (r.sources.length) await deps.store.putResearch(norm, r, now)
-        else console.log(JSON.stringify({ event: 'no_sources_fallback', question }))
-      }
-      const composed = await compose(deps.chat, config.model, question, r)
-      const explainer = toExplainer(composed, r, { question, model: config.model, today: day, suffix: deps.randomSuffix() })
-      await deps.store.insert(explainer, norm)
-      await Promise.all([deps.store.bumpUsage(day, 'global'), deps.store.bumpUsage(day, ip)])
-      console.log(JSON.stringify({ event: 'explainer_created', slug: explainer.slug, sources: explainer.sources.length }))
-      return json({ explainer, cached: false }, 201)
+      return await refundIfRejected(quota.refund, async () => {
+        let r = await deps.store.getResearch(norm, RESEARCH_TTL_MS, now)
+        if (!r) {
+          r = await deps.retrieve(question)
+          // không có tư liệu → AI vẫn trả lời bằng kiến thức chung (bài không có nguồn, giao diện cảnh báo).
+          // Chỉ cache khi có tư liệu để lần sau còn tra cứu lại.
+          if (r.sources.length) await deps.store.putResearch(norm, r, now)
+          else console.log(JSON.stringify({ event: 'no_sources_fallback', question }))
+        }
+        const composed = await compose(deps.chat, config.model, question, r)
+        const explainer = toExplainer(composed, r, { question, model: config.model, today: day, suffix: deps.randomSuffix() })
+        await deps.store.insert(explainer, norm, now)
+        console.log(JSON.stringify({ event: 'explainer_created', slug: explainer.slug, sources: explainer.sources.length }))
+        return json({ explainer, cached: false }, 201)
+      })
+    }
+
+    if (request.method === 'POST' && path === '/api/chat') {
+      const input = parseChatInput(await request.json().catch(() => null))
+      if (typeof input === 'string') return fail(400, 'bad_request', input)
+
+      const now = deps.now()
+      const day = now.toISOString().slice(0, 10)
+      const quota = await reserve(deps.store, day, await ipKey(request), 'chat:', config.chatDailyLimitPerIp, config.chatDailyLimit)
+      if (!quota.ok)
+        return fail(429, 'daily_limit', 'Đã hết lượt hỏi nhanh hôm nay. Hãy thử lại vào ngày mai.', { 'retry-after': String(secondsUntilMidnightUtc(now)) })
+
+      return await refundIfRejected(quota.refund, async () => {
+        const reply = await chatReply(deps.chat, config.chatModel, input)
+        if (!reply) return fail(502, 'empty_reply', 'AI chưa trả lời được. Hãy hỏi lại theo cách khác.')
+        return json({ reply })
+      })
     }
 
     return fail(404, 'not_found', 'Không có endpoint này.')
@@ -125,6 +148,36 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
     }
     console.log(JSON.stringify({ event: 'unhandled', message: err instanceof Error ? err.message : String(err) }))
     return fail(500, 'internal', 'Lỗi máy chủ.')
+  }
+}
+
+type Reservation = { ok: true; refund: () => Promise<void> } | { ok: false }
+
+/**
+ * Giữ chỗ 1 lượt gọi AI *trước* khi gọi (mỗi lần tăng bộ đếm là atomic trong D1, nên request song song không vượt quota).
+ * Tăng bộ đếm IP trước: người đã hết lượt riêng không làm tăng bộ đếm chung của mọi người.
+ */
+export async function reserve(store: Store, day: string, ip: string, scope: string, perIp: number, global: number): Promise<Reservation> {
+  const ipCounter = `${scope}${ip}`
+  const globalCounter = `${scope}global`
+  if ((await store.bumpUsage(day, ipCounter)) > perIp) return { ok: false }
+  if ((await store.bumpUsage(day, globalCounter)) > global) {
+    await store.bumpUsage(day, ipCounter, -1)
+    return { ok: false }
+  }
+  return { ok: true, refund: async () => void (await Promise.all([store.bumpUsage(day, ipCounter, -1), store.bumpUsage(day, globalCounter, -1)])) }
+}
+
+/**
+ * Groq từ chối request (rate limit, sai key, lỗi dịch vụ) → không tốn token → hoàn lượt.
+ * AI đã trả lời nhưng nội dung không đạt (PipelineError) → vẫn tính lượt, tránh bị lợi dụng để đốt quota Groq.
+ */
+async function refundIfRejected<T>(refund: () => Promise<void>, run: () => Promise<T>): Promise<T> {
+  try {
+    return await run()
+  } catch (err) {
+    if (err instanceof GroqError) await refund()
+    throw err
   }
 }
 

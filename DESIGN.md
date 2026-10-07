@@ -36,6 +36,8 @@ Theme: `html[data-theme="light" | "dark"]`; khi không đặt, theo `prefers-col
 
 - Explainer (`src/components/explainer`): `ExplainerView` (tóm tắt, ý chính, chuỗi nhân quả dạng sơ đồ dọc, thẻ tác động có mũi tên ↑↓↔ + chữ, bảng chỉ số, góc nhìn khác, thuật ngữ, quiz, nguồn, disclaimer) và `ExplainerCard`. Bài AI luôn có nhãn "AI tạo · cần kiểm tra nguồn".
 
+- `ChatBubble` (`src/components/chat`): nút tròn 56px góc dưới phải (`--brand`), khung chat 400px (mobile: full chiều ngang trừ gutter 16px). Bôi đen chữ trong bài → hiện nút "Hỏi AI về đoạn đã chọn". Chỉ hiện khi bản build bật AI. Luôn có dòng nhắc "AI có thể sai".
+
 ## Bố cục
 
 - ≥ 1024px: sidebar 248px + nội dung. Trang case: cột đọc + mục lục sticky 240px.

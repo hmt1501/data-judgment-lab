@@ -1,3 +1,4 @@
+import type { ChatInput, ChatReply } from '../../shared/chat'
 import type { Explainer, ExplainerSummary } from '../../shared/explainer'
 
 const BASE = import.meta.env.VITE_API_BASE?.replace(/\/+$/, '')
@@ -49,6 +50,14 @@ export const askAi = (question: string) =>
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ question }),
   })
+
+export const askChat = (input: ChatInput, signal?: AbortSignal) =>
+  request<ChatReply>('/api/chat', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(input),
+    signal,
+  }).then((r) => r.reply)
 
 /** Thông điệp thân thiện, kèm thời gian chờ nếu bị giới hạn. */
 export function describeError(err: unknown): string {

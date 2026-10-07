@@ -7,11 +7,11 @@ export interface Store {
   findByNorm(norm: string): Promise<Explainer | null>
   getBySlug(slug: string): Promise<Explainer | null>
   list(opts: { q?: string; topic?: string; limit: number }): Promise<ExplainerSummary[]>
-  insert(e: Explainer, norm: string): Promise<void>
+  insert(e: Explainer, norm: string, now: Date): Promise<void>
   getResearch(norm: string, maxAgeMs: number, now: Date): Promise<Research | null>
   putResearch(norm: string, r: Research, now: Date): Promise<void>
-  /** tăng bộ đếm và trả về giá trị mới */
-  bumpUsage(day: string, key: string): Promise<number>
+  /** cộng `delta` (mặc định 1, âm = hoàn lượt) vào bộ đếm, atomic; trả về giá trị mới */
+  bumpUsage(day: string, key: string, delta?: number): Promise<number>
   getUsage(day: string, key: string): Promise<number>
 }
 
@@ -68,11 +68,11 @@ export class D1Store implements Store {
     return results.map((r) => summary(JSON.parse(r.json) as Explainer))
   }
 
-  async insert(e: Explainer, norm: string) {
+  async insert(e: Explainer, norm: string, now: Date) {
     await this.db.batch([
       this.db
         .prepare('INSERT INTO explainers (id, slug, question, norm_question, title, topic, tldr, json, model, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')
-        .bind(e.id, e.slug, e.question, norm, e.title, e.topic, e.tldr, JSON.stringify(e), e.model ?? '', new Date().toISOString()),
+        .bind(e.id, e.slug, e.question, norm, e.title, e.topic, e.tldr, JSON.stringify(e), e.model ?? '', now.toISOString()),
       this.db.prepare('INSERT INTO explainers_fts (slug, body) VALUES (?, ?)').bind(e.slug, foldVi(`${e.question} ${e.title} ${e.tldr}`)),
     ])
   }
@@ -93,12 +93,12 @@ export class D1Store implements Store {
       .run()
   }
 
-  async bumpUsage(day: string, key: string) {
+  async bumpUsage(day: string, key: string, delta = 1) {
     const row = await this.db
-      .prepare('INSERT INTO usage (day, key, count) VALUES (?, ?, 1) ON CONFLICT (day, key) DO UPDATE SET count = count + 1 RETURNING count')
-      .bind(day, key)
+      .prepare('INSERT INTO usage (day, key, count) VALUES (?, ?, ?) ON CONFLICT (day, key) DO UPDATE SET count = count + excluded.count RETURNING count')
+      .bind(day, key, delta)
       .first<{ count: number }>()
-    return row?.count ?? 1
+    return row?.count ?? delta
   }
 
   async getUsage(day: string, key: string) {

@@ -3,7 +3,9 @@ import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useMatches } from 'react-router-dom'
 import { cases } from '../content'
 import { curatedExplainers } from '../content/explainerLibrary'
+import { aiEnabled } from '../lib/api'
 import { useProgress } from '../state/ProgressProvider'
+import { ChatBubble } from '../components/chat/ChatBubble'
 import { ProgressBar } from '../components/ui/primitives'
 import { CommandPalette } from './CommandPalette'
 import styles from './AppShell.module.css'
@@ -112,6 +114,7 @@ export function AppShell() {
         </main>
       </div>
 
+      {aiEnabled && <ChatBubble />}
       {palette && <CommandPalette onClose={() => setPalette(false)} />}
     </div>
   )

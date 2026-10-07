@@ -26,6 +26,11 @@ function fakeFetch(routes: Record<string, string | null>): typeof fetch & { urls
 }
 
 describe('parseNewsRss', () => {
+  it('bỏ qua link https sai cú pháp thay vì làm hỏng cả bước tra cứu', () => {
+    const xml = '<rss><channel><item><title>Hỏng</title><link>https://exa mple.com/x</link></item><item><title>Tốt</title><link>https://www.vnexpress.net/a</link></item></channel></rss>'
+    expect(parseNewsRss(xml).map((n) => [n.title, n.publisher])).toEqual([['Tốt', 'vnexpress.net']])
+  })
+
   it('lấy tiêu đề (bỏ đuôi " - nguồn"), link https, nguồn, ngày; giới hạn số tin', () => {
     const items = parseNewsRss(rss(9))
     expect(items).toHaveLength(LIMITS.news)

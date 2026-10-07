@@ -3,6 +3,7 @@ import type { TopicId } from '../../shared/taxonomy'
 import { foldVi, slugify } from '../../shared/text'
 import type { Chat } from './groq'
 import { COMPOSE_SCHEMA, COMPOSE_SYSTEM, type Composed } from './prompts'
+import { hostOf } from './retrieve'
 
 export type Source = { title: string; url: string }
 export type Research = { notes: string; sources: Source[] }
@@ -61,11 +62,9 @@ export function toExplainer(
   const picked = [...new Set(composed.sourceIndexes)]
     .map((i) => r.sources[i - 1])
     .filter((s): s is Source => !!s)
-  const sources = (picked.length ? picked : r.sources.slice(0, 3)).map((s) => ({
-    title: s.title,
-    publisher: new URL(s.url).hostname.replace(/^www\./, ''),
-    url: s.url,
-  }))
+  const sources = (picked.length ? picked : r.sources.slice(0, 3))
+    .map((s) => ({ title: s.title, publisher: hostOf(s.url), url: s.url }))
+    .filter((s) => s.publisher)
 
   const explainer: Explainer = {
     id: slug,

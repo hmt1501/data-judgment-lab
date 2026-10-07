@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { CaseStudy } from '../content/types'
 import { answerQuiz, emptyProgress, HISTORY_LIMIT, markOpened, sanitize, setCompleted, toggleSaved } from './progress'
-import { inProgress, levelProgress, recommendNext, skillMastery } from './insights'
+import { inProgress, levelProgress, localDayIndex, recommendNext, skillMastery } from './insights'
 import { loadProgress, saveProgress, STORAGE_KEY } from './storage'
 
 const mk = (id: string, level: CaseStudy['level'], skills: CaseStudy['skills']) =>
@@ -86,6 +86,13 @@ describe('insights', () => {
     const all = ['a', 'b', 'c'].reduce((acc, id) => setCompleted(acc, id, true, NOW), emptyProgress())
     expect(recommendNext(cases, all)).toBeUndefined()
   })
+
+  it('localDayIndex đổi ngày lúc 0h giờ máy', () => {
+    const late = new Date(2026, 9, 7, 23, 59)
+    const early = new Date(2026, 9, 8, 0, 1)
+    expect(localDayIndex(early) - localDayIndex(late)).toBe(1)
+    expect(localDayIndex(new Date(2026, 9, 8, 6, 59))).toBe(localDayIndex(early))
+  })
 })
 
 describe('storage', () => {
@@ -107,5 +114,29 @@ describe('storage', () => {
     expect(loadProgress(s, NOW)).toEqual(p)
     s.setItem(STORAGE_KEY, '{not json')
     expect(loadProgress(s, NOW)).toEqual(emptyProgress())
+  })
+
+  it('bản v2 bị sửa tay: bỏ trường/mục sai kiểu, giữ phần hợp lệ', () => {
+    const s = new MemoryStorage()
+    s.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        version: 2,
+        completed: ['a'],
+        quiz: { q1: 'b', q2: 3 },
+        saved: ['a', null],
+        history: [{ caseId: 'a', openedAt: NOW }, 'x'],
+        lastSection: null,
+        settings: { name: 7, theme: 'neon' },
+      }),
+    )
+    const p = loadProgress(s, NOW)
+    expect(p.completed).toEqual({})
+    expect(p.quiz).toEqual({ q1: 'b' })
+    expect(p.saved).toEqual(['a'])
+    expect(p.history).toEqual([{ caseId: 'a', openedAt: NOW }])
+    expect(p.lastSection).toEqual({})
+    expect(p.explainersRead).toEqual({})
+    expect(p.settings).toEqual({ name: '', theme: 'system' })
   })
 })

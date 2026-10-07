@@ -25,8 +25,9 @@ const sample = (slug: string, over: Partial<Explainer> = {}): Explainer => ({ ..
 
 describe('D1Store', () => {
   it('insert → getBySlug / findByNorm / FTS không dấu / lọc topic', async () => {
-    await store.insert(sample(`fed-${run}`), `fed hoi ${run}`)
-    await store.insert(sample(`vang-${run}`, { title: 'Giá vàng SJC chênh thế giới', question: 'Vì sao giá vàng SJC cao?', tldr: 'Cung cầu vàng miếng.', topic: 'markets-investing' }), `vang ${run}`)
+    const t = new Date('2026-10-07T00:00:00Z')
+    await store.insert(sample(`fed-${run}`), `fed hoi ${run}`, t)
+    await store.insert(sample(`vang-${run}`, { title: 'Giá vàng SJC chênh thế giới', question: 'Vì sao giá vàng SJC cao?', tldr: 'Cung cầu vàng miếng.', topic: 'markets-investing' }), `vang ${run}`, t)
 
     expect((await store.getBySlug(`fed-${run}`))?.title).toBe(fedRateHikeVietnam.title)
     expect((await store.findByNorm(`vang ${run}`))?.slug).toBe(`vang-${run}`)
@@ -43,6 +44,7 @@ describe('D1Store', () => {
     expect(await store.bumpUsage(day, 'global')).toBe(1)
     expect(await store.bumpUsage(day, 'global')).toBe(2)
     expect(await store.getUsage(day, 'global')).toBe(2)
+    expect(await store.bumpUsage(day, 'global', -1)).toBe(1)
 
     const t0 = new Date('2026-10-07T00:00:00Z')
     await store.putResearch(`r ${run}`, { notes: 'n', sources: [{ title: 'A', url: 'https://a.org' }] }, t0)

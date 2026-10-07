@@ -26,6 +26,15 @@ const stripTags = (s: string) => decodeEntities(s.replace(/<[^>]+>/g, '')).repla
 
 const clip = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s)
 
+/** Hostname (bỏ "www."), hoặc '' nếu URL sai cú pháp. */
+export function hostOf(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, '')
+  } catch {
+    return ''
+  }
+}
+
 const tag = (xml: string, name: string) => xml.match(new RegExp(`<${name}[^>]*>([\\s\\S]*?)</${name}>`))?.[1]
 
 type NewsItem = { title: string; url: string; publisher: string; date: string; snippet: string }
@@ -47,7 +56,8 @@ export function parseNewsRss(xml: string, limit = LIMITS.news): NewsItem[] {
   for (const m of xml.matchAll(/<item>([\s\S]*?)<\/item>/g)) {
     const raw = m[1]
     const url = articleUrl(decodeEntities(tag(raw, 'link') ?? '').trim())
-    if (!url.startsWith('https://')) continue
+    const host = hostOf(url)
+    if (!url.startsWith('https://') || !host) continue
     const publisher = stripTags(tag(raw, 'News:Source') ?? tag(raw, 'source') ?? '')
     let title = stripTags(tag(raw, 'title') ?? '')
     // Google News nối " - <nguồn>" vào cuối tiêu đề
@@ -56,7 +66,7 @@ export function parseNewsRss(xml: string, limit = LIMITS.news): NewsItem[] {
     // mô tả của Google chỉ lặp lại tiêu đề dạng HTML, của Bing là đoạn tóm tắt thật
     const description = stripTags(tag(raw, 'description') ?? '')
     const snippet = description && !description.startsWith(title) ? clip(description, LIMITS.snippetChars) : ''
-    items.push({ title, url, publisher: publisher || new URL(url).hostname, date: Number.isFinite(pub) ? new Date(pub).toISOString().slice(0, 10) : '', snippet })
+    items.push({ title, url, publisher: publisher || host, date: Number.isFinite(pub) ? new Date(pub).toISOString().slice(0, 10) : '', snippet })
     if (items.length >= limit) break
   }
   return items

@@ -28,8 +28,8 @@ class MemoryStore implements Store {
   async putResearch(norm: string, r: Research) {
     this.research.set(norm, r)
   }
-  async bumpUsage(day: string, key: string) {
-    const n = (this.usage.get(`${day}|${key}`) ?? 0) + 1
+  async bumpUsage(day: string, key: string, delta = 1) {
+    const n = (this.usage.get(`${day}|${key}`) ?? 0) + delta
     this.usage.set(`${day}|${key}`, n)
     return n
   }
@@ -106,7 +106,7 @@ function setup(over: Partial<Deps> = {}, configOver: Partial<Deps['config']> = {
     store,
     chat,
     retrieve,
-    config: { allowedOrigins: ['https://hmt1501.github.io', 'http://localhost:*'], dailyLimit: 20, dailyLimitPerIp: 8, model: 'openai/gpt-oss-120b', ...configOver },
+    config: { allowedOrigins: ['https://hmt1501.github.io', 'http://localhost:*'], dailyLimit: 20, dailyLimitPerIp: 8, model: 'openai/gpt-oss-120b', chatModel: 'openai/gpt-oss-20b', chatDailyLimit: 200, chatDailyLimitPerIp: 2, ...configOver },
     now: () => NOW,
     randomSuffix: () => 'abc123',
     ...over,
@@ -161,7 +161,28 @@ describe('POST /api/explain', () => {
     expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0)
   })
 
-  it('Groq 429 → 429 kèm retry-after; tư liệu được giữ để thử lại không phải tra cứu lại', async () => {
+  it('quota được giữ chỗ trước khi gọi AI: request song song không vượt giới hạn', async () => {
+    const { deps, chat } = setup({}, { dailyLimit: 1 })
+    const res = await Promise.all([ask(deps, 'Lạm phát CPI đọc như thế nào?'), ask(deps, 'Giá vàng vì sao tăng mạnh?')])
+    expect(res.map((r) => r.status).sort()).toEqual([201, 429])
+    expect(chat.calls).toHaveLength(1)
+  })
+
+  it('IP đã hết lượt không làm tăng bộ đếm chung', async () => {
+    const { deps, store } = setup({}, { dailyLimitPerIp: 1 })
+    expect((await ask(deps, 'Lạm phát CPI đọc như thế nào?')).status).toBe(201)
+    expect((await ask(deps, 'Giá vàng vì sao tăng mạnh?')).status).toBe(429)
+    expect((await ask(deps, 'Nợ công Việt Nam có đáng lo không?')).status).toBe(429)
+    expect(await store.getUsage('2026-10-07', 'global')).toBe(1)
+  })
+
+  it('AI trả nội dung sai chuẩn vẫn bị tính lượt (đã tốn token)', async () => {
+    const { deps, store } = setup({ chat: fakeChat({ outOfScope: true }) })
+    expect((await ask(deps, 'Đội bóng nào vô địch năm nay?')).status).toBe(422)
+    expect(await store.getUsage('2026-10-07', 'global')).toBe(1)
+  })
+
+  it('Groq 429 → 429 kèm retry-after, hoàn lượt; tư liệu được giữ để thử lại không phải tra cứu lại', async () => {
     const chat: Chat = async () => {
       throw new GroqError(429, 'rate limit', 42)
     }
@@ -204,6 +225,68 @@ describe('POST /api/explain', () => {
     const { deps, store } = setup({ chat: fakeChat({ quiz: { ...bad, options: bad.options.map((o) => ({ ...o, correct: true })) } }) })
     expect((await ask(deps, 'Nợ công Việt Nam có đáng lo không?')).status).toBe(502)
     expect(store.explainers).toHaveLength(0)
+  })
+})
+
+const chatReq = (deps: Deps, body: unknown) =>
+  handle(
+    new Request('https://api.test/api/chat', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', origin: 'https://hmt1501.github.io', 'cf-connecting-ip': '1.2.3.4' },
+      body: JSON.stringify(body),
+    }),
+    deps,
+  )
+
+function textChat(reply = 'CVR = `đơn hàng / phiên`.'): Chat & { calls: ChatRequest[] } {
+  const calls: ChatRequest[] = []
+  const fn: Chat = async (req) => {
+    calls.push(req)
+    return { content: reply }
+  }
+  return Object.assign(fn, { calls })
+}
+
+describe('POST /api/chat', () => {
+  const question = { messages: [{ role: 'user', content: 'CVR là gì?' }] }
+
+  it('trả lời bằng model chat, gửi kèm ngữ cảnh trang và đoạn trích', async () => {
+    const chat = textChat()
+    const { deps, store } = setup({ chat })
+    const res = await chatReq(deps, { ...question, context: 'Case: Doanh thu giảm sau checkout mới', quote: 'CVR giảm 0,4 điểm' })
+    expect(res.status).toBe(200)
+    expect(((await res.json()) as { reply: string }).reply).toContain('CVR')
+    expect(chat.calls[0].model).toBe('openai/gpt-oss-20b')
+    const system = chat.calls[0].messages.filter((m) => m.role === 'system').map((m) => m.content).join('\n')
+    expect(system).toContain('checkout mới')
+    expect(system).toContain('CVR giảm 0,4 điểm')
+    expect(chat.calls[0].messages.at(-1)).toEqual({ role: 'user', content: 'CVR là gì?' })
+    // quota chat tách khỏi quota tạo bài
+    expect(await store.getUsage('2026-10-07', 'chat:global')).toBe(1)
+    expect(await store.getUsage('2026-10-07', 'global')).toBe(0)
+  })
+
+  it('input sai → 400; tin cuối không phải câu hỏi → 400', async () => {
+    const { deps, chat } = setup({ chat: textChat() })
+    expect((await chatReq(deps, { messages: 'hi' })).status).toBe(400)
+    expect((await chatReq(deps, { messages: [{ role: 'system', content: 'x' }] })).status).toBe(400)
+    expect((await chatReq(deps, { messages: [{ role: 'user', content: 'a' }, { role: 'assistant', content: 'b' }] })).status).toBe(400)
+    expect(chat.calls).toHaveLength(0)
+  })
+
+  it('hết lượt theo IP → 429; Groq từ chối → hoàn lượt', async () => {
+    const { deps, store } = setup({ chat: textChat() })
+    expect((await chatReq(deps, question)).status).toBe(200)
+    expect((await chatReq(deps, question)).status).toBe(200)
+    expect((await chatReq(deps, question)).status).toBe(429)
+
+    const busy: Chat = async () => {
+      throw new GroqError(429, 'rate limit', 30)
+    }
+    const other = setup({ chat: busy })
+    expect((await chatReq(other.deps, question)).status).toBe(429)
+    expect(await other.store.getUsage('2026-10-07', 'chat:global')).toBe(0)
+    expect(await store.getUsage('2026-10-07', 'chat:global')).toBe(2)
   })
 })
 

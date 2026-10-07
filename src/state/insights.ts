@@ -52,14 +52,16 @@ export function quizStats(cases: CaseStudy[], p: Progress) {
   return { total, answered, correct }
 }
 
+/** Số thứ tự ngày theo giờ địa phương (đổi lúc 0h, không phải 7h sáng như khi chia theo UTC). */
+export const localDayIndex = (date: Date) => Math.floor((date.getTime() - date.getTimezoneOffset() * 60_000) / 86_400_000)
+
 /** Một "bẫy tư duy" cố định theo ngày, lấy từ mọi case. */
 export function trapOfTheDay(cases: CaseStudy[], date: Date) {
   const all = cases.flatMap((c) =>
     c.sections.flatMap((s) => s.blocks.flatMap((b) => (b.kind === 'pitfalls' ? b.items.map((item) => ({ item, case: c })) : []))),
   )
   if (!all.length) return undefined
-  const day = Math.floor(date.getTime() / 86_400_000)
-  return all[day % all.length]
+  return all[localDayIndex(date) % all.length]
 }
 
 export type Recommendation ={ case: CaseStudy; reason: string }
