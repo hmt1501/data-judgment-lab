@@ -1,4 +1,4 @@
-import type { Explainer } from '../explainer'
+import type { Explainer } from '../../../shared/explainer'
 
 export const landLaw2024PriceTable: Explainer = {
   id: 'land-law-2024-price-table',

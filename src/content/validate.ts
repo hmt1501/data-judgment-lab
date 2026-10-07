@@ -1,4 +1,4 @@
-import { domains, levels, skills } from './taxonomy'
+import { domains, levels, skills } from '../../shared/taxonomy'
 import type { Block, CaseStudy } from './types'
 
 const skillIds = new Set<string>(skills.map((s) => s.id))

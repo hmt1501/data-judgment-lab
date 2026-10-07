@@ -4,9 +4,9 @@ import { useSearchParams } from 'react-router-dom'
 import { CaseCard } from '../components/CaseCard'
 import { Button, EmptyState, PageHeader } from '../components/ui/primitives'
 import { cases } from '../content'
-import { domains, isSkillId, levels, skillById, skills } from '../content/taxonomy'
+import { domains, isSkillId, levels, skillById, skills } from '../../shared/taxonomy'
 import { searchCases } from '../lib/search'
-import { useSearchParamState } from '../lib/useSearchParamState'
+import { useSearchParamState, useSetSearchParam } from '../lib/useSearchParamState'
 import { useProgress } from '../state/ProgressProvider'
 import styles from './Library.module.css'
 
@@ -23,23 +23,13 @@ const usedSkills = skills.filter((s) => cases.some((c) => c.skills.includes(s.id
 export function Library() {
   const { progress } = useProgress()
   const [params, setParams] = useSearchParams()
+  const set = useSetSearchParam()
   const [q, setQ] = useSearchParamState('q')
   const level = params.get('level') ?? ''
   const domain = params.get('domain') ?? ''
   const status = params.get('status') ?? ''
   const rawSkill = params.get('skill') ?? ''
   const skill = isSkillId(rawSkill) ? rawSkill : ''
-
-  const set = (key: string, value: string) =>
-    setParams(
-      (prev) => {
-        const next = new URLSearchParams(prev)
-        if (value) next.set(key, value)
-        else next.delete(key)
-        return next
-      },
-      { replace: true },
-    )
 
   const results = useMemo(() => {
     const opened = new Set(progress.history.map((h) => h.caseId))

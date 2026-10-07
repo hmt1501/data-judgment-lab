@@ -1,4 +1,4 @@
-import { emptyProgress, type Progress } from '../state/progress'
+import { emptyProgress, type Progress } from './progress'
 
 export const STORAGE_KEY = 'djl:v2'
 const LEGACY = { done: 'djl-done', recent: 'djl-recent', saved: 'djl-saved' }

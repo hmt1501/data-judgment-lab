@@ -1,6 +1,6 @@
 import { ArrowDown, ArrowDownRight, ArrowUpRight, Bot, ExternalLink, Lightbulb, MoveHorizontal, Scale, ShieldAlert } from 'lucide-react'
-import type { Explainer } from '../../content/explainer'
-import { topicById } from '../../content/taxonomy'
+import type { Explainer } from '../../../shared/explainer'
+import { topicById } from '../../../shared/taxonomy'
 import { inline } from '../../lib/markdown'
 import { Quiz } from '../blocks/Quiz'
 import { Pill } from '../ui/primitives'

@@ -13,5 +13,5 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true
   },
-  "include": ["worker-configuration.d.ts", "src", "test", "../src/content/explainer.ts"]
+  "include": ["worker-configuration.d.ts", "src", "test", "../shared"]
 }

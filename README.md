@@ -19,22 +19,24 @@ npm run build
 ## Cấu trúc
 
 ```
+CLAUDE.md / CODEMAP.md nguyên tắc làm việc + bản đồ code (đọc trước khi sửa)
 DESIGN.md              quy ước thiết kế (tokens, component)
+shared/                code dùng chung frontend + worker + script: taxonomy, schema Explainer, xử lý chuỗi tiếng Việt
 src/styles/            tokens.css (sáng/tối), base.css
 src/app/               router (hash), AppShell, CommandPalette (Ctrl/⌘ K)
-src/pages/             Home, Library, CaseReader, Path, Profile
-src/components/        ui/ (Button, Card, Pill, Progress…), blocks/ (bảng, biểu đồ, quiz…)
-src/content/           types.ts, taxonomy.ts, cases/<id>.ts, validate.ts
-                       explainer.ts (schema Đọc nhanh, dùng chung với worker), explainers/<slug>.ts
+src/pages/             Home, Library, CaseReader, Explain, ExplainerReader, Path, Profile
+src/components/        ui/ (Button, Card, Pill, Progress…), blocks/ (bảng, biểu đồ, quiz…), explainer/
+src/content/           types.ts + validate.ts (case), cases/<id>.ts, explainers/<slug>.ts
+src/state/             tiến độ học: reducer, lưu localStorage, thống kê & gợi ý bài tiếp theo
+src/lib/               tiện ích UI: gọi API, tìm kiếm, markdown, query param
 worker/                Cloudflare Worker + D1: API "Hỏi AI" (Groq)
 scripts/draft-case.ts  soạn nháp case bằng Groq → drafts/ để review
-src/state/ src/lib/    tiến độ, lưu trữ, gợi ý bài tiếp theo, tìm kiếm
 ```
 
 ## Thêm một case
 
 1. Tạo `src/content/cases/<id>.ts`, export đúng một `CaseStudy` (xem `revenue-checkout.ts` làm mẫu).
-2. Dùng id kỹ năng/lĩnh vực/cấp độ trong `taxonomy.ts`.
+2. Dùng id kỹ năng/lĩnh vực/cấp độ trong `shared/taxonomy.ts`.
 3. Chạy `npm test`: bộ kiểm tra sẽ báo lỗi nếu quiz không có đúng 1 đáp án, bảng thiếu cột, thiếu nguồn tham khảo…
 
 Case tự xuất hiện trong thư viện, lộ trình và tìm kiếm.

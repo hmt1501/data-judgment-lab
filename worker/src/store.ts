@@ -1,7 +1,6 @@
-import { foldVi, type Explainer } from '../../src/content/explainer'
+import type { Explainer, ExplainerSummary } from '../../shared/explainer'
+import { foldVi } from '../../shared/text'
 import type { Research } from './pipeline'
-
-export type ExplainerSummary = Pick<Explainer, 'slug' | 'question' | 'title' | 'topic' | 'tldr' | 'origin' | 'asOf'>
 
 /** Lưu trữ tách khỏi D1 để test được bằng bản trong bộ nhớ. */
 export interface Store {

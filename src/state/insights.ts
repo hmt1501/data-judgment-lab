@@ -1,6 +1,6 @@
-import { levels, skills, type LevelId, type SkillId } from '../content/taxonomy'
+import { levels, skills, type LevelId, type SkillId } from '../../shared/taxonomy'
 import type { CaseStudy } from '../content/types'
-import type { Progress } from '../state/progress'
+import type { Progress } from './progress'
 
 export type Ratio = { done: number; total: number }
 

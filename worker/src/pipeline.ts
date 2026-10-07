@@ -1,5 +1,6 @@
-import { EXPLAINER_LIMITS, foldVi, slugify, validateExplainer, type Explainer } from '../../src/content/explainer'
-import type { TopicId } from '../../src/content/taxonomy'
+import { EXPLAINER_LIMITS, validateExplainer, type Explainer } from '../../shared/explainer'
+import type { TopicId } from '../../shared/taxonomy'
+import { foldVi, slugify } from '../../shared/text'
 import type { Chat } from './groq'
 import { COMPOSE_SCHEMA, COMPOSE_SYSTEM, type Composed } from './prompts'
 

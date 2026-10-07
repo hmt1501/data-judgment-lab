@@ -1,4 +1,4 @@
-import type { Explainer } from '../explainer'
+import type { Explainer } from '../../../shared/explainer'
 
 export const corporateBondsRisk: Explainer = {
   id: 'corporate-bonds-risk',

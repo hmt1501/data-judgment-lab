@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import type { Explainer } from '../../src/content/explainer'
+import type { Explainer } from '../../shared/explainer'
 import { handle, originAllowed, type Deps } from '../src/app'
 import { GroqError, groqChat, type Chat, type ChatRequest } from '../src/groq'
 import { normalizeQuestion, type Research } from '../src/pipeline'

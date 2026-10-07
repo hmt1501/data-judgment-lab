@@ -1,4 +1,4 @@
-import type { Explainer } from '../explainer'
+import type { Explainer } from '../../../shared/explainer'
 
 export const usChinaTradeWarSupplyChain: Explainer = {
   id: 'us-china-trade-war-supply-chain',

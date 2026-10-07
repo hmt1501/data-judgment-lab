@@ -4,10 +4,12 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ExplainerCard } from '../components/explainer/ExplainerCard'
 import { Button, EmptyState, PageHeader, SectionTitle } from '../components/ui/primitives'
 import { useToast } from '../components/ui/Toast'
-import { curatedExplainers, searchExplainers } from '../content/explainerLibrary'
-import { isTopicId, topics } from '../content/taxonomy'
-import { aiEnabled, askAi, describeError, listAiExplainers, type ExplainerSummary } from '../lib/api'
-import { useSearchParamState } from '../lib/useSearchParamState'
+import type { ExplainerSummary } from '../../shared/explainer'
+import { isTopicId, topics } from '../../shared/taxonomy'
+import { curatedExplainers } from '../content/explainerLibrary'
+import { aiEnabled, askAi, describeError, listAiExplainers } from '../lib/api'
+import { searchExplainers } from '../lib/search'
+import { useSearchParamState, useSetSearchParam } from '../lib/useSearchParamState'
 import styles from './Explain.module.css'
 
 const examples = [
@@ -22,7 +24,8 @@ const stages = ['Đang tra cứu nguồn trên web…', 'Đang đọc và chọn
 export function ExplainPage() {
   const toast = useToast()
   const navigate = useNavigate()
-  const [params, setParams] = useSearchParams()
+  const [params] = useSearchParams()
+  const set = useSetSearchParam()
   const [q, setQ] = useSearchParamState('q')
   const rawTopic = params.get('topic') ?? ''
   const topic = isTopicId(rawTopic) ? rawTopic : ''
@@ -33,17 +36,6 @@ export function ExplainPage() {
   const [stage, setStage] = useState(0)
   const [askError, setAskError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
-
-  const set = (key: string, value: string) =>
-    setParams(
-      (prev) => {
-        const next = new URLSearchParams(prev)
-        if (value) next.set(key, value)
-        else next.delete(key)
-        return next
-      },
-      { replace: true },
-    )
 
   useEffect(() => {
     if (!aiEnabled) return

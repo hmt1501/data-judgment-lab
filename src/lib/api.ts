@@ -1,6 +1,4 @@
-import type { Explainer } from '../content/explainer'
-
-export type ExplainerSummary = Pick<Explainer, 'slug' | 'question' | 'title' | 'topic' | 'tldr' | 'origin' | 'asOf'>
+import type { Explainer, ExplainerSummary } from '../../shared/explainer'
 
 const BASE = import.meta.env.VITE_API_BASE?.replace(/\/+$/, '')
 

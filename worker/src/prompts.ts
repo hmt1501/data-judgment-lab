@@ -1,4 +1,4 @@
-import { topics } from '../../src/content/taxonomy'
+import { topics } from '../../shared/taxonomy'
 
 export const COMPOSE_SYSTEM = `Bạn biên soạn bài "Đọc nhanh" tiếng Việt cho người học phân tích kinh tế.
 Đầu vào gồm câu hỏi và TƯ LIỆU: các tin mới nhất (tiêu đề, tóm tắt, ngày, nguồn) và tóm tắt Wikipedia. Đôi khi không có tư liệu.

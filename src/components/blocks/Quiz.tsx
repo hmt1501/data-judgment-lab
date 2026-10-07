@@ -1,12 +1,10 @@
 import { Check, HelpCircle, RotateCcw, X } from 'lucide-react'
 import { useState } from 'react'
-import type { Block } from '../../content/types'
+import type { QuizBlock } from '../../content/types'
 import { Markdown } from '../../lib/markdown'
 import { useProgress } from '../../state/ProgressProvider'
 import { Button, cx } from '../ui/primitives'
 import styles from './blocks.module.css'
-
-type QuizBlock = Extract<Block, { kind: 'quiz' }>
 
 export function Quiz({ block }: { block: QuizBlock }) {
   const { progress, actions } = useProgress()

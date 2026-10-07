@@ -1,5 +1,10 @@
 import { isTopicId, type TopicId } from './taxonomy'
-import type { QuizBlock } from './types'
+
+/** `explain` là markdown tối giản (xem `src/lib/markdown.tsx`). */
+export type QuizOption = { id: string; text: string; correct?: true; explain: string }
+
+/** Câu trắc nghiệm: dùng trong case (block `quiz`) và trong bài Đọc nhanh. */
+export type QuizBlock = { kind: 'quiz'; id: string; question: string; options: QuizOption[] }
 
 /**
  * Bài "Đọc nhanh": giải thích một câu hỏi kinh tế/đầu tư/BĐS/thời sự,
@@ -30,6 +35,9 @@ export type Explainer = {
   asOf: string
   model?: string
 }
+
+/** Dạng rút gọn cho danh sách (API `GET /api/explainers`, thẻ bài). */
+export type ExplainerSummary = Pick<Explainer, 'slug' | 'question' | 'title' | 'topic' | 'tldr' | 'origin' | 'asOf'>
 
 export const EXPLAINER_LIMITS = {
   keyPoints: [3, 5],
@@ -88,21 +96,4 @@ export function validateExplainer(input: unknown): string[] {
     if (correct !== 1) at(`quiz phải có đúng 1 đáp án đúng (đang có ${correct})`)
   }
   return errors
-}
-
-/** Chữ thường, bỏ dấu: dùng cho slug và so khớp câu hỏi. */
-export const foldVi = (s: string) =>
-  s
-    .toLocaleLowerCase('vi')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .replace(/đ/g, 'd')
-
-export function slugify(s: string, maxWords = 10): string {
-  return foldVi(s)
-    .replace(/[^a-z0-9]+/g, ' ')
-    .trim()
-    .split(/\s+/)
-    .slice(0, maxWords)
-    .join('-')
 }

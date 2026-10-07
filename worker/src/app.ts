@@ -1,4 +1,4 @@
-import { isTopicId } from '../../src/content/taxonomy'
+import { isTopicId } from '../../shared/taxonomy'
 import { GroqError, type Chat } from './groq'
 import { compose, normalizeQuestion, PipelineError, toExplainer, type Research } from './pipeline'
 import type { Store } from './store'

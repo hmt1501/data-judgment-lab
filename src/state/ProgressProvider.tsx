@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { cases } from '../content'
 import { quizIds } from '../content/validate'
-import { browserStorage, clearLegacy, loadProgress, saveProgress } from '../lib/storage'
+import { browserStorage, clearLegacy, loadProgress, saveProgress } from './storage'
 import * as P from './progress'
 
 type Actions = {

@@ -1,4 +1,4 @@
-import type { Explainer } from '../explainer'
+import type { Explainer } from '../../../shared/explainer'
 
 export const emergencyFundAssetAllocation: Explainer = {
   id: 'emergency-fund-asset-allocation',

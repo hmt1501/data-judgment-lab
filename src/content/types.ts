@@ -1,4 +1,7 @@
-import type { DomainId, LevelId, SkillId } from './taxonomy'
+import type { QuizBlock } from '../../shared/explainer'
+import type { DomainId, LevelId, SkillId } from '../../shared/taxonomy'
+
+export type { QuizBlock, QuizOption } from '../../shared/explainer'
 
 /** Sắc thái màu cho số liệu / ô bảng. */
 export type Tone = 'neutral' | 'positive' | 'negative' | 'warning'
@@ -15,8 +18,6 @@ export type TableColumn = { key: string; label: string; align?: 'left' | 'right'
 export type TableCell = string | number
 
 export type ChartSeries = { key: string; label: string }
-
-export type QuizOption = { id: string; text: string; correct?: true; explain: Markdown }
 
 export type ActionItem = { action: string; owner: string; metric: string; threshold: string }
 
@@ -48,13 +49,11 @@ export type Block =
       caption?: Markdown
     }
   | { kind: 'formula'; expression: string; note?: Markdown }
-  | { kind: 'quiz'; id: string; question: string; options: QuizOption[] }
+  | QuizBlock
   | { kind: 'callout'; tone: 'insight' | 'expert' | 'warning'; title?: string; md: Markdown }
   | { kind: 'list'; style: 'steps' | 'bullets' | 'check'; items: Markdown[] }
   | { kind: 'actions'; items: ActionItem[] }
   | { kind: 'pitfalls'; items: Pitfall[] }
-
-export type QuizBlock = Extract<Block, { kind: 'quiz' }>
 
 export type SectionKind = 'context' | 'framework' | 'analysis' | 'solution' | 'pitfalls'
 

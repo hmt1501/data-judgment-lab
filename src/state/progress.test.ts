@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CaseStudy } from '../content/types'
-import { answerQuiz, emptyProgress, HISTORY_LIMIT, markOpened, sanitize, setCompleted, toggleSaved } from '../state/progress'
+import { answerQuiz, emptyProgress, HISTORY_LIMIT, markOpened, sanitize, setCompleted, toggleSaved } from './progress'
 import { inProgress, levelProgress, recommendNext, skillMastery } from './insights'
 import { loadProgress, saveProgress, STORAGE_KEY } from './storage'
 

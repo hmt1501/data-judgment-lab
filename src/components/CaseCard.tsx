@@ -1,6 +1,6 @@
 import { ArrowRight, Bookmark, CheckCircle2, Clock3 } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { domainById, levelById, skillById } from '../content/taxonomy'
+import { domainById, levelById, skillById } from '../../shared/taxonomy'
 import type { CaseStudy } from '../content/types'
 import { useProgress } from '../state/ProgressProvider'
 import { Pill } from './ui/primitives'

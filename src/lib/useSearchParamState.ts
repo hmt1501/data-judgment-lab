@@ -48,3 +48,21 @@ export function useSearchParamState(key: string, delay = 300): [string, (value: 
 
   return [value, update]
 }
+
+/** Đặt/xóa một query param (thay thế history entry, không tạo mục Back mới). */
+export function useSetSearchParam(): (key: string, value: string) => void {
+  const [, setParams] = useSearchParams()
+  return useCallback(
+    (key: string, value: string) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev)
+          if (value) next.set(key, value)
+          else next.delete(key)
+          return next
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
+}

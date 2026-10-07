@@ -10,7 +10,7 @@
  */
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { parseArgs } from 'node:util'
-import { domains, levels, skills } from '../src/content/taxonomy'
+import { domains, levels, skills } from '../shared/taxonomy'
 import type { CaseStudy, Section } from '../src/content/types'
 import { validateCase } from '../src/content/validate'
 import { GroqError, groqChat, type ChatRequest } from '../worker/src/groq'

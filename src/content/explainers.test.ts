@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { validateExplainer, type Explainer } from './explainer'
+import { validateExplainer, type Explainer } from '../../shared/explainer'
 
 const modules = import.meta.glob<Record<string, Explainer>>('./explainers/*.ts', { eager: true })
 const all = Object.entries(modules).map(([path, mod]) => {

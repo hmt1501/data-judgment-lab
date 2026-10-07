@@ -1,4 +1,4 @@
-import { levels } from './taxonomy'
+import { levels } from '../../shared/taxonomy'
 import type { CaseStudy } from './types'
 
 const modules = import.meta.glob<Record<string, CaseStudy>>('./cases/*.ts', { eager: true })

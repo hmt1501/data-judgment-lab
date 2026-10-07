@@ -1,7 +1,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { getPlatformProxy } from 'wrangler'
 import { fedRateHikeVietnam } from '../../src/content/explainers/fed-rate-hike-vietnam'
-import type { Explainer } from '../../src/content/explainer'
+import type { Explainer } from '../../shared/explainer'
 import { D1Store } from '../src/store'
 
 // Chạy SQL thật trên D1 cục bộ (miniflare) với migration đã áp dụng (`wrangler d1 migrations apply --local`).
