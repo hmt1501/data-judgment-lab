@@ -137,6 +137,6 @@ describe('storage', () => {
     expect(p.history).toEqual([{ caseId: 'a', openedAt: NOW }])
     expect(p.lastSection).toEqual({})
     expect(p.explainersRead).toEqual({})
-    expect(p.settings).toEqual({ name: '', theme: 'system' })
+    expect(p.settings).toEqual({ name: '', theme: 'light' })
   })
 })
