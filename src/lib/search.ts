@@ -1,7 +1,7 @@
 import type { Explainer } from '../../shared/explainer'
 import { domainById, levelById, skillById, topicById } from '../../shared/taxonomy'
 import { foldVi } from '../../shared/text'
-import type { CaseStudy } from '../content/types'
+import type { CaseMeta } from '../content/types'
 
 /**
  * Tìm không dấu: mọi từ trong truy vấn phải xuất hiện.
@@ -24,7 +24,7 @@ function makeSearch<T extends object>(textOf: (item: T) => string) {
   }
 }
 
-export const searchCases = makeSearch<CaseStudy>((c) =>
+export const searchCases = makeSearch<CaseMeta>((c) =>
   [c.title, c.summary, c.question, domainById(c.domain).name, levelById(c.level).name, ...c.skills.map((s) => skillById(s).name)].join(' '),
 )
 

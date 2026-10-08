@@ -1,6 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { cases } from '../content'
-import { quizIds } from '../content/validate'
 import * as P from './progress'
 import { browserStorage, clearLegacy, loadProgress, parseProgress, saveProgress } from './storage'
 import { useSync, type SyncActions, type SyncInfo } from './useSync'
@@ -21,7 +20,7 @@ type Actions = {
 const ProgressContext = createContext<{ progress: P.Progress; actions: Actions; sync: SyncInfo } | null>(null)
 
 const knownCases = new Set(cases.map((c) => c.id))
-const knownQuizzes = new Set(cases.flatMap(quizIds))
+const knownQuizzes = new Set(cases.flatMap((c) => c.quizzes.map((q) => q.id)))
 const now = () => new Date().toISOString()
 const cleanRemote = (raw: unknown) => P.sanitize(parseProgress(raw) ?? P.emptyProgress(), knownCases, knownQuizzes)
 

@@ -55,10 +55,11 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 | `components/chat/ChatBubble.tsx` | bong bóng Hỏi nhanh AI: hội thoại trong bộ nhớ (mất khi tải lại), tự gửi kèm ngữ cảnh trang + đoạn đang bôi đen trong `#main` |
 | `components/sync/SyncCard.tsx` | thẻ "Học tiếp trên thiết bị khác" ở trang Hồ sơ: bật đồng bộ, nhập mã, sao chép, tắt |
 | `components/chat/pageContext.ts` | dựng mô tả trang đang đọc (case + phần hiện tại / bài Đọc nhanh) gửi kèm câu hỏi |
-| `content/types.ts` | kiểu `CaseStudy`, `Section`, `Block` (discriminated union) |
+| `content/types.ts` | kiểu `CaseStudy`, `Section`, `Block` (discriminated union); `CaseMeta` = phần nhẹ (không có sections/takeaways/references) + `outline`, `quizzes`, `pitfalls` |
+| `content/meta.ts` | `caseMetaOf(case)` → `CaseMeta` (thuần; plugin Vite dùng) |
 | `content/validate.ts` | `validateCase`, `quizIds` |
-| `content/index.ts` | `cases` (glob `cases/*.ts`, sắp theo cấp → tên), `caseById` |
-| `content/explainerLibrary.ts` | `curatedExplainers` (glob `explainers/*.ts`), `curatedBySlug` |
+| `content/index.ts` | `cases: CaseMeta[]` (glob `cases/*.ts?meta`, nạp sẵn, sắp theo cấp → tên), `caseById`, `loadCase(id)` (nạp thân bài khi mở case) |
+| `content/explainerLibrary.ts` | `curatedExplainers: ExplainerSummary[]` (nạp sẵn), `curatedBySlug`, `loadCurated(slug)` (nạp thân bài khi mở) |
 | `content/cases/`, `content/explainers/` | dữ liệu; tự xuất hiện trong app khi thêm file |
 | `state/progress.ts` | kiểu `Progress` (v2) + reducer thuần (`markOpened`, `setCompleted`, `answerQuiz`, `sanitize`…), `mergeProgress` / `adoptRemote` cho đồng bộ |
 | `state/ProgressProvider.tsx` | context `useProgress()` → `{ progress, actions, sync }`; lưu khi đổi; áp theme |
@@ -115,7 +116,7 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 
 ## Bẫy đã biết / nợ kỹ thuật
 
-- Nội dung bundle eager → `index-*.js` ~950 KB. Khi nội dung tăng gấp đôi: tách thân bài theo route (ghi chú trong `vite.config.ts`).
+- Nội dung được tách: plugin `contentMeta` trong `vite.config.ts` biến `cases/<id>.ts?meta` / `explainers/<slug>.ts?meta` thành phần nhẹ (`caseMetaOf`, `explainerSummaryOf`) nạp sẵn; thân bài là chunk riêng (import động) nạp khi mở (`loadCase`, `loadCurated`). `index-*.js` ~520 KB (từng 1.337 KB). Cần metadata mới cho thư viện/thống kê → thêm vào `caseMetaOf`, không đọc `sections` ở nơi khác. Plugin dùng `node:module.stripTypeScriptTypes` (Node ≥ 22.13, in cảnh báo experimental khi build) nên file nội dung chỉ được có `import type`.
 - Quota tính theo **lượt gọi AI** (kể cả khi AI trả nội dung sai chuẩn), chỉ hoàn lượt khi Groq từ chối request. Bộ đếm ngày theo UTC (reset 7h sáng giờ VN).
 - Đồng bộ: hai máy cùng sửa khi offline sẽ được gộp kiểu "hợp" — thao tác xóa (bỏ lưu, bỏ hoàn thành) ở một máy có thể bị máy kia khôi phục. Mất mã = mất đường đồng bộ (không có tài khoản để khôi phục). Chưa dọn hồ sơ lâu không dùng.
 - Bong bóng chat chỉ bắt đoạn bôi đen bên trong `#main` (nội dung trang), không bắt trong sidebar hay chính khung chat.

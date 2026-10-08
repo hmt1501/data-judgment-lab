@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest'
-import type { CaseStudy } from '../content/types'
+import type { CaseMeta } from '../content/types'
 import { answerQuiz, emptyProgress, HISTORY_LIMIT, markOpened, sanitize, setCompleted, toggleSaved } from './progress'
 import { inProgress, levelProgress, localDayIndex, recommendNext, skillMastery } from './insights'
 import { loadProgress, saveProgress, STORAGE_KEY } from './storage'
 
-const mk = (id: string, level: CaseStudy['level'], skills: CaseStudy['skills']) =>
-  ({ id, level, skills, title: id }) as CaseStudy
+const mk = (id: string, level: CaseMeta['level'], skills: CaseMeta['skills']) =>
+  ({ id, level, skills, title: id }) as CaseMeta
 
 const cases = [
   mk('a', 'fresher', ['funnel', 'segmentation']),

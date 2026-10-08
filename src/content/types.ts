@@ -61,6 +61,19 @@ export type Section = { id: string; kind: SectionKind; title: string; blocks: Bl
 
 export type Reference = { title: string; publisher: string; url: string; note: string }
 
+/**
+ * Phần nhẹ của case, nạp sẵn cho thư viện/tìm kiếm/thống kê. Thân bài (sections, takeaways, references)
+ * chỉ nạp khi mở case (`loadCase`). Trích tự động từ `cases/<id>.ts` bằng `caseMetaOf` (plugin Vite `?meta`).
+ */
+export type CaseMeta = Omit<CaseStudy, 'sections' | 'takeaways' | 'references'> & {
+  /** tên các section, đủ cho ngữ cảnh chat */
+  outline: { id: string; title: string }[]
+  /** mỗi quiz kèm id đáp án đúng, đủ cho thống kê */
+  quizzes: { id: string; correct: string }[]
+  /** mọi "bẫy thường gặp", dùng cho "bẫy của ngày" ở trang chủ */
+  pitfalls: Pitfall[]
+}
+
 export type CaseStudy = {
   id: string
   title: string

@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ExplainerView } from '../components/explainer/ExplainerView'
 import { EmptyState } from '../components/ui/primitives'
 import type { Explainer } from '../../shared/explainer'
-import { curatedBySlug } from '../content/explainerLibrary'
+import { curatedBySlug, loadCurated } from '../content/explainerLibrary'
 import { aiEnabled, ApiError, describeError, getAiExplainer } from '../lib/api'
 import { useProgress } from '../state/ProgressProvider'
 import styles from './ExplainerReader.module.css'
@@ -15,16 +15,17 @@ type State = { status: 'loading' } | { status: 'ready'; e: Explainer } | { statu
 export function ExplainerReader() {
   const { slug = '' } = useParams()
   const { actions } = useProgress()
-  const curated = curatedBySlug(slug)
-  const [state, setState] = useState<State>(() => (curated ? { status: 'ready', e: curated } : aiEnabled ? { status: 'loading' } : { status: 'missing' }))
+  const curated = !!curatedBySlug(slug)
+  const [state, setState] = useState<State>(curated || aiEnabled ? { status: 'loading' } : { status: 'missing' })
 
   useEffect(() => {
-    if (curated) return setState({ status: 'ready', e: curated })
-    if (!aiEnabled) return setState({ status: 'missing' })
+    if (!curated && !aiEnabled) return setState({ status: 'missing' })
     let alive = true
     setState({ status: 'loading' })
-    getAiExplainer(slug)
-      .then((e) => alive && setState({ status: 'ready', e }))
+    // bài soạn sẵn: thân bài ở chunk riêng; bài AI: lấy từ API
+    const body: Promise<Explainer | undefined> = curated ? loadCurated(slug) : getAiExplainer(slug)
+    body
+      .then((e) => alive && setState(e ? { status: 'ready', e } : { status: 'missing' }))
       .catch((err: unknown) => alive && setState(err instanceof ApiError && err.status === 404 ? { status: 'missing' } : { status: 'error', message: describeError(err) }))
     return () => {
       alive = false

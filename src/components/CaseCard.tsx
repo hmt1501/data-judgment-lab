@@ -1,12 +1,12 @@
 import { ArrowRight, Bookmark, CheckCircle2, Clock3 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { domainById, levelById, skillById } from '../../shared/taxonomy'
-import type { CaseStudy } from '../content/types'
+import type { CaseMeta } from '../content/types'
 import { useProgress } from '../state/ProgressProvider'
 import { Pill } from './ui/primitives'
 import styles from './CaseCard.module.css'
 
-export function CaseCard({ c }: { c: CaseStudy }) {
+export function CaseCard({ c }: { c: CaseMeta }) {
   const { progress, actions } = useProgress()
   const done = !!progress.completed[c.id]
   const opened = progress.history.some((h) => h.caseId === c.id)

@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest'
+import { cases, loadCase } from './index'
+import { caseMetaOf } from './meta'
 import type { CaseStudy } from './types'
 import { quizIds, validateCase } from './validate'
 
@@ -13,6 +15,15 @@ describe('nội dung case', () => {
   it.each(all)('%s hợp lệ', (path, c) => {
     expect(path.endsWith(`/${c.id}.ts`), 'tên file phải trùng id').toBe(true)
     expect(validateCase(c)).toEqual([])
+  })
+
+  it('metadata nạp sẵn (plugin ?meta) khớp thân bài, và loadCase trả đúng thân bài', async () => {
+    expect(cases.length).toBe(all.length)
+    for (const [, c] of all) {
+      expect(cases.find((m) => m.id === c.id), c.id).toEqual(caseMetaOf(c))
+      expect((await loadCase(c.id))?.id).toBe(c.id)
+    }
+    expect(await loadCase('khong-co')).toBeUndefined()
   })
 
   it('id case và id quiz là duy nhất', () => {

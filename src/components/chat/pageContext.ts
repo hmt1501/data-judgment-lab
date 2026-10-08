@@ -9,7 +9,7 @@ export type PageRef = { caseId?: string; slug?: string }
 export function pageContext(page: PageRef, progress: Pick<Progress, 'lastSection' | 'explainersRead'>): string | undefined {
   const c = page.caseId ? caseById(page.caseId) : undefined
   if (c) {
-    const section = c.sections.find((s) => s.id === progress.lastSection[c.id])
+    const section = c.outline.find((s) => s.id === progress.lastSection[c.id])
     return [
       `Case "${c.title}" (cấp ${levelById(c.level).name}, lĩnh vực ${domainById(c.domain).name}; dữ liệu mô phỏng).`,
       `Câu hỏi kinh doanh: ${c.question}`,

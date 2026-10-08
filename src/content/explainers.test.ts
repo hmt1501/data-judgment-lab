@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { validateExplainer, type Explainer } from '../../shared/explainer'
+import { explainerSummaryOf, validateExplainer, type Explainer } from '../../shared/explainer'
+import { curatedExplainers, loadCurated } from './explainerLibrary'
 
 const modules = import.meta.glob<Record<string, Explainer>>('./explainers/*.ts', { eager: true })
 const all = Object.entries(modules).map(([path, mod]) => {
@@ -15,6 +16,15 @@ describe('explainer soạn sẵn', () => {
     expect(e.origin).toBe('curated')
     expect(e.quiz.id).toBe(`${e.id}-q`)
     expect(validateExplainer(e)).toEqual([])
+  })
+
+  it('tóm tắt nạp sẵn (plugin ?meta) khớp thân bài, và loadCurated trả đúng thân bài', async () => {
+    expect(curatedExplainers.length).toBe(all.length)
+    for (const [, e] of all) {
+      expect(curatedExplainers.find((s) => s.slug === e.slug), e.slug).toEqual(explainerSummaryOf(e))
+      expect((await loadCurated(e.slug))?.slug).toBe(e.slug)
+    }
+    expect(await loadCurated('khong-co')).toBeUndefined()
   })
 
   it('slug duy nhất', () => {

@@ -1,4 +1,4 @@
-import { isTopicId, type TopicId } from './taxonomy'
+import { isTopicId, type TopicId } from './taxonomy.ts'
 
 /** `explain` là markdown tối giản (xem `src/lib/markdown.tsx`). */
 export type QuizOption = { id: string; text: string; correct?: true; explain: string }
@@ -38,6 +38,16 @@ export type Explainer = {
 
 /** Dạng rút gọn cho danh sách (API `GET /api/explainers`, thẻ bài). */
 export type ExplainerSummary = Pick<Explainer, 'slug' | 'question' | 'title' | 'topic' | 'tldr' | 'origin' | 'asOf'>
+
+export const explainerSummaryOf = ({ slug, question, title, topic, tldr, origin, asOf }: Explainer): ExplainerSummary => ({
+  slug,
+  question,
+  title,
+  topic,
+  tldr,
+  origin,
+  asOf,
+})
 
 export const EXPLAINER_LIMITS = {
   keyPoints: [3, 5],

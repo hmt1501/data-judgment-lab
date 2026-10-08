@@ -9,7 +9,7 @@ const empty = { lastSection: {}, explainersRead: {} }
 describe('pageContext', () => {
   it('case: tiêu đề, câu hỏi, phần đang đọc', () => {
     const c = cases[0]
-    const section = c.sections[1]
+    const section = c.outline[1]
     const ctx = pageContext({ caseId: c.id }, { ...empty, lastSection: { [c.id]: section.id } })!
     expect(ctx).toContain(c.title)
     expect(ctx).toContain(c.question)

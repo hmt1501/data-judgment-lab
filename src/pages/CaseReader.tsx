@@ -1,10 +1,10 @@
-import { ArrowLeft, ArrowRight, Bookmark, CheckCircle2, Clock3, ExternalLink, FlaskConical, Lightbulb, RotateCcw } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Bookmark, CheckCircle2, Clock3, ExternalLink, FlaskConical, Lightbulb, LoaderCircle, RotateCcw } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { Block } from '../components/blocks/Block'
-import { Button, ButtonLink, Pill, ProgressBar } from '../components/ui/primitives'
+import { Button, ButtonLink, EmptyState, Pill, ProgressBar } from '../components/ui/primitives'
 import { useToast } from '../components/ui/Toast'
-import { caseById, cases } from '../content'
+import { caseById, cases, loadCase } from '../content'
 import { domainById, levelById, skillById } from '../../shared/taxonomy'
 import type { CaseStudy, SectionKind } from '../content/types'
 import { recommendNext } from '../state/insights'
@@ -36,10 +36,34 @@ function tocOf(c: CaseStudy): TocItem[] {
 
 const anchor = (id: string) => `sec-${id}`
 
+type Body = { status: 'loading' } | { status: 'ready'; c: CaseStudy } | { status: 'error' }
+
 export function CaseReader() {
-  const { id } = useParams()
-  const c = caseById(id)
-  return c ? <Reader key={c.id} c={c} /> : <NotFound />
+  const { id = '' } = useParams()
+  return caseById(id) ? <BodyLoader key={id} id={id} /> : <NotFound />
+}
+
+/** Thân bài nằm ở chunk riêng, chỉ nạp khi mở case. */
+function BodyLoader({ id }: { id: string }) {
+  const [body, setBody] = useState<Body>({ status: 'loading' })
+  useEffect(() => {
+    let alive = true
+    loadCase(id)
+      .then((c) => alive && setBody(c ? { status: 'ready', c } : { status: 'error' }))
+      .catch(() => alive && setBody({ status: 'error' }))
+    return () => {
+      alive = false
+    }
+  }, [id])
+
+  if (body.status === 'ready') return <Reader c={body.c} />
+  if (body.status === 'error')
+    return <EmptyState icon={<LoaderCircle size={22} />} title="Không tải được bài" desc="Kiểm tra kết nối mạng rồi tải lại trang." />
+  return (
+    <p className={styles.loading}>
+      <LoaderCircle size={20} className={styles.spin} /> Đang tải bài…
+    </p>
+  )
 }
 
 function Reader({ c }: { c: CaseStudy }) {
