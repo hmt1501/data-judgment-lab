@@ -2,6 +2,18 @@
 
 Bản đồ code cho agent/dev. Cập nhật file này khi thêm/di chuyển file quan trọng.
 
+## Nguyên tắc
+
+1. **Ranh giới thư mục.** `shared/` không import từ `src/` hay `worker/`, không dùng React/DOM. `worker/` chỉ import `shared/` (không import `src/`). Kiểu/logic dùng ở cả hai phía → đặt trong `shared/`, không copy.
+2. **Nội dung là dữ liệu có kiểu.** Case = `src/content/cases/<id>.ts`, bài Đọc nhanh = `src/content/explainers/<slug>.ts`; tên file trùng id/slug, mỗi file export đúng 1 object. Mọi ràng buộc nằm ở `validateCase` / `validateExplainer` — thêm luật mới thì thêm vào đó, đừng kiểm tra rải rác trong UI.
+3. **Trung thực.** Số liệu case luôn là mô phỏng (có nhãn); nguồn tham khảo là link `https://` thật. Bài AI chỉ được dùng nguồn từ bước tra cứu (AI chọn theo số thứ tự, không tự viết URL).
+4. **UI theo token.** Không hard-code màu/cỡ chữ/khoảng cách — dùng biến trong `src/styles/tokens.css` (xem [design.md](design.md)). Không có nút giả. Chữ ≥ 13px.
+5. **Tiếng Việt.** Text giao diện, comment và thông báo lỗi viết tiếng Việt. Tìm kiếm luôn không dấu qua `foldVi` (`shared/text.ts`).
+6. **Tiến độ học** chỉ đổi qua reducer thuần trong `src/state/progress.ts`. Đổi cấu trúc `Progress` → tăng `version` và viết migrate trong `src/state/storage.ts` (không làm mất dữ liệu người dùng).
+7. **Worker:** logic HTTP trong `app.ts` nhận `Deps` (store, chat, retrieve, now) để test không cần mạng. Đổi schema D1 → thêm file migration mới, không sửa migration cũ.
+8. **Bí mật** (`GROQ_API_KEY`, `.dev.vars`, `.secrets*`) không bao giờ commit.
+9. Thêm/đổi thư mục hay file quan trọng → cập nhật `docs/codemap.md` trong cùng commit.
+
 ## Tổng quan 30 giây
 
 ```
@@ -59,7 +71,7 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 | `lib/markdown.tsx` | markdown tối giản an toàn: `**đậm**`, `*nghiêng*`, `` `code` ``, `[link](https://…)`, đoạn cách dòng trống |
 | `lib/useToday.ts` | ngày hiện tại, tự đổi lúc 0h |
 | `lib/useSearchParamState.ts` | ô nhập đồng bộ query param có debounce (sửa lỗi bộ gõ Telex); `useSetSearchParam` |
-| `styles/tokens.css`, `base.css` | token thiết kế sáng/tối; xem `DESIGN.md` |
+| `styles/tokens.css`, `base.css` | token thiết kế sáng/tối; xem `docs/design.md` |
 
 ### `worker/` — API Hỏi AI (xem `worker/README.md`)
 | File | Nội dung |
@@ -78,7 +90,7 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 
 ### Khác
 - `.github/workflows/deploy.yml`: test FE + worker → build → Pages; deploy Worker khi có secret Cloudflare (migrate D1 trước, deploy sau).
-- `docs/superpowers/specs/`: tài liệu thiết kế lịch sử (v2, 2026-10-05) — kiến trúc trong đó đã cũ, tin file này hơn.
+- `docs/`: `codemap.md` (file này), `design.md` (design system). Root chỉ giữ `CLAUDE.md`, `README.md` + config.
 
 ## Luồng chính
 
@@ -95,7 +107,7 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 | Thêm case | `src/content/cases/<id>.ts` (mẫu: `revenue-checkout.ts`) → `npm test` |
 | Thêm bài Đọc nhanh | `src/content/explainers/<slug>.ts`, `id = slug`, `quiz.id = <slug>-q`, `origin: 'curated'` |
 | Thêm kỹ năng/lĩnh vực/chủ đề | `shared/taxonomy.ts` (topic mới ảnh hưởng cả prompt + schema AI) |
-| Thêm loại block | `src/content/types.ts` → `Block.tsx` → `validate.ts` (nếu có ràng buộc) → `DESIGN.md` |
+| Thêm loại block | `src/content/types.ts` → `Block.tsx` → `validate.ts` (nếu có ràng buộc) → `docs/design.md` |
 | Đổi luật bài AI | `shared/explainer.ts` (`EXPLAINER_LIMITS`, validate) + `worker/src/prompts.ts` cho khớp |
 | Đổi giới hạn quota/model/CORS | `worker/wrangler.jsonc` → `vars`, rồi `cd worker && npm run types` |
 | Thêm trường mới vào `Progress` | `progress.ts` (kiểu + `emptyProgress` + **`mergeProgress`**) → `storage.ts` (`fromStored`) → test đồng bộ |

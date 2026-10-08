@@ -1,4 +1,4 @@
-# DESIGN.md — Data Judgment Lab
+# Design — Data Judgment Lab
 
 Hợp đồng thiết kế của app. Mọi component đọc giá trị từ `src/styles/tokens.css`; không hard-code màu, cỡ chữ hay khoảng cách trong component.
 

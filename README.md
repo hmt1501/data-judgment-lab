@@ -13,19 +13,22 @@ Tiến độ lưu trong trình duyệt; bật **đồng bộ** (trang Hồ sơ) 
 npm ci
 npm run dev        # mở trong mạng LAN
 npm test           # kiểm tra nội dung case + logic
+npm run typecheck  # frontend + shared + scripts
 npm run build
 ```
 
 ## Cấu trúc
 
+Chi tiết từng file: [docs/codemap.md](docs/codemap.md). Quy ước thiết kế: [docs/design.md](docs/design.md).
+
 ```
-CLAUDE.md / CODEMAP.md nguyên tắc làm việc + bản đồ code (đọc trước khi sửa)
-DESIGN.md              quy ước thiết kế (tokens, component)
+CLAUDE.md              quy tắc cho agent (đọc trước khi sửa)
+docs/                  codemap.md (bản đồ code + nguyên tắc), design.md (tokens, component)
 shared/                code dùng chung frontend + worker + script: taxonomy, schema Explainer, xử lý chuỗi tiếng Việt
 src/styles/            tokens.css (sáng/tối), base.css
 src/app/               router (hash), AppShell, CommandPalette (Ctrl/⌘ K)
-src/pages/             Home, Library, CaseReader, Explain, ExplainerReader, Path, Profile
-src/components/        ui/ (Button, Card, Pill, Progress…), blocks/ (bảng, biểu đồ, quiz…), explainer/
+src/pages/             Home, Library, CaseReader, Explain, ExplainerReader, Path, Profile, NotFound
+src/components/        ui/ (Button, Card, Pill, Progress…), blocks/ (bảng, biểu đồ, quiz…), explainer/, chat/ (Hỏi nhanh AI), sync/ (đồng bộ)
 src/content/           types.ts + validate.ts (case), cases/<id>.ts, explainers/<slug>.ts
 src/state/             tiến độ học: reducer, lưu localStorage, thống kê & gợi ý bài tiếp theo
 src/lib/               tiện ích UI: gọi API, tìm kiếm, markdown, query param
