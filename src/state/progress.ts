@@ -28,7 +28,7 @@ export const emptyProgress = (): Progress => ({
   history: [],
   lastSection: {},
   explainersRead: {},
-  settings: { name: '', theme: 'system' },
+  settings: { name: '', theme: 'light' },
 })
 
 export function markOpened(p: Progress, caseId: string, now: string): Progress {
