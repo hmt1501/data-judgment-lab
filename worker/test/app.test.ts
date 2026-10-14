@@ -36,9 +36,9 @@ class MemoryStore implements Store {
   async getUsage(day: string, key: string) {
     return this.usage.get(`${day}|${key}`) ?? 0
   }
-  profiles = new Map<string, { data: string; rev: number }>()
+  profiles = new Map<string, { data: string; rev: number; secret: string | null }>()
   async createProfile(hash: string, data: string) {
-    this.profiles.set(hash, { data, rev: 1 })
+    this.profiles.set(hash, { data, rev: 1, secret: null })
   }
   async getProfile(hash: string) {
     return this.profiles.get(hash) ?? null
@@ -46,8 +46,13 @@ class MemoryStore implements Store {
   async updateProfile(hash: string, data: string, baseRev: number) {
     const cur = this.profiles.get(hash)
     if (!cur || cur.rev !== baseRev) return null
-    this.profiles.set(hash, { data, rev: cur.rev + 1 })
+    this.profiles.set(hash, { ...cur, data, rev: cur.rev + 1 })
     return cur.rev + 1
+  }
+  async setSecret(hash: string, secret: string | null) {
+    const cur = this.profiles.get(hash)
+    if (cur) this.profiles.set(hash, { ...cur, secret })
+    return !!cur
   }
 }
 
@@ -110,39 +115,41 @@ function fakeRetrieve(r: Research = research) {
 }
 
 const NOW = new Date('2026-10-07T03:00:00Z')
+const KEY = 'gsk_testkey0123456789abcdef'
 
-function setup(over: Partial<Deps> = {}, configOver: Partial<Deps['config']> = {}) {
+function setup(over: { chat?: Chat; retrieve?: Deps['retrieve'] } = {}, configOver: Partial<Deps['config']> = {}) {
   const store = new MemoryStore()
-  const chat = fakeChat()
-  const retrieve = fakeRetrieve()
+  const chat = over.chat ?? fakeChat()
+  const retrieve = over.retrieve ?? fakeRetrieve()
+  const keys: string[] = []
   const deps: Deps = {
     store,
-    chat,
+    chatFor: (key) => (keys.push(key), chat),
     retrieve,
-    config: { allowedOrigins: ['https://hmt1501.github.io', 'http://localhost:*'], dailyLimit: 20, dailyLimitPerIp: 8, model: 'openai/gpt-oss-120b', chatModel: 'openai/gpt-oss-20b', chatDailyLimit: 200, chatDailyLimitPerIp: 2, syncCreateDaily: 100, syncCreatePerIp: 2, ...configOver },
+    config: { allowedOrigins: ['https://hmt1501.github.io', 'http://localhost:*'], dailyLimitPerIp: 8, model: 'openai/gpt-oss-120b', chatModel: 'openai/gpt-oss-20b', syncCreateDaily: 100, syncCreatePerIp: 2, ...configOver },
     now: () => NOW,
     randomSuffix: () => 'abc123',
     randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
-    ...over,
   }
-  return { deps, store, chat: (over.chat ?? chat) as ReturnType<typeof fakeChat>, retrieve: (over.retrieve ?? retrieve) as ReturnType<typeof fakeRetrieve> }
+  return { deps, store, keys, chat: chat as ReturnType<typeof fakeChat>, retrieve: retrieve as ReturnType<typeof fakeRetrieve> }
 }
 
-const ask = (deps: Deps, question: string, headers: Record<string, string> = {}) =>
+const ask = (deps: Deps, question: string, groqKey: unknown = KEY) =>
   handle(
     new Request('https://api.test/api/explain', {
       method: 'POST',
-      headers: { 'content-type': 'application/json', origin: 'https://hmt1501.github.io', 'cf-connecting-ip': '1.2.3.4', ...headers },
-      body: JSON.stringify({ question }),
+      headers: { 'content-type': 'application/json', origin: 'https://hmt1501.github.io', 'cf-connecting-ip': '1.2.3.4' },
+      body: JSON.stringify({ question, groqKey }),
     }),
     deps,
   )
 
 describe('POST /api/explain', () => {
   it('tra cứu gọn + 1 lần gọi AI, chỉ giữ nguồn có thật, lưu và trả về', async () => {
-    const { deps, store, chat, retrieve } = setup()
+    const { deps, store, chat, retrieve, keys } = setup()
     const res = await ask(deps, 'Fed tăng lãi suất ảnh hưởng gì tới Việt Nam?')
     expect(res.status).toBe(201)
+    expect(keys).toEqual([KEY])
     expect(res.headers.get('access-control-allow-origin')).toBe('https://hmt1501.github.io')
     const { explainer } = (await res.json()) as { explainer: Explainer }
     expect(explainer.slug).toBe('fed-tang-lai-suat-va-ty-gia-viet-abc123')
@@ -167,25 +174,21 @@ describe('POST /api/explain', () => {
     expect(chat.calls).toHaveLength(1)
   })
 
-  it('hết quota ngày → 429 có retry-after', async () => {
-    const { deps, store } = setup({}, { dailyLimit: 1 })
-    await store.bumpUsage('2026-10-07', 'global')
-    const res = await ask(deps, 'Lạm phát CPI đọc như thế nào?')
-    expect(res.status).toBe(429)
-    expect(Number(res.headers.get('retry-after'))).toBeGreaterThan(0)
+  it('thiếu key → 401 need_key; key sai định dạng → 400; không gọi AI', async () => {
+    const { deps, chat } = setup()
+    const missing = await ask(deps, 'Lạm phát CPI đọc như thế nào?', null)
+    expect(missing.status).toBe(401)
+    expect(((await missing.json()) as { error: { code: string } }).error.code).toBe('need_key')
+    expect((await ask(deps, 'Lạm phát CPI đọc như thế nào?', 'sk-abc')).status).toBe(400)
+    expect(chat.calls).toHaveLength(0)
   })
 
-  it('quota được giữ chỗ trước khi gọi AI: request song song không vượt giới hạn', async () => {
-    const { deps, chat } = setup({}, { dailyLimit: 1 })
+  it('mỗi IP có trần bài/ngày (giữ chỗ trước khi gọi AI); IP đã hết lượt không làm tăng bộ đếm thống kê', async () => {
+    const { deps, store, chat } = setup({}, { dailyLimitPerIp: 1 })
     const res = await Promise.all([ask(deps, 'Lạm phát CPI đọc như thế nào?'), ask(deps, 'Giá vàng vì sao tăng mạnh?')])
     expect(res.map((r) => r.status).sort()).toEqual([201, 429])
+    expect(Number(res.find((r) => r.status === 429)!.headers.get('retry-after'))).toBeGreaterThan(0)
     expect(chat.calls).toHaveLength(1)
-  })
-
-  it('IP đã hết lượt không làm tăng bộ đếm chung', async () => {
-    const { deps, store } = setup({}, { dailyLimitPerIp: 1 })
-    expect((await ask(deps, 'Lạm phát CPI đọc như thế nào?')).status).toBe(201)
-    expect((await ask(deps, 'Giá vàng vì sao tăng mạnh?')).status).toBe(429)
     expect((await ask(deps, 'Nợ công Việt Nam có đáng lo không?')).status).toBe(429)
     expect(await store.getUsage('2026-10-07', 'global')).toBe(1)
   })
@@ -220,12 +223,15 @@ describe('POST /api/explain', () => {
     expect(store.research.size).toBe(0)
   })
 
-  it('key Groq sai → 503 ai_config', async () => {
+  it('Groq từ chối key → 401 user_key_invalid, hoàn lượt', async () => {
     const chat: Chat = async () => {
       throw new GroqError(401, 'Invalid API Key')
     }
-    const { deps } = setup({ chat })
-    expect((await ask(deps, 'Giá vàng vì sao tăng mạnh?')).status).toBe(503)
+    const { deps, store } = setup({ chat })
+    const res = await ask(deps, 'Giá vàng vì sao tăng mạnh?')
+    expect(res.status).toBe(401)
+    expect(((await res.json()) as { error: { code: string } }).error.code).toBe('user_key_invalid')
+    expect(await store.getUsage('2026-10-07', 'global')).toBe(0)
   })
 
   it('ngoài phạm vi → 422; câu hỏi quá ngắn → 400', async () => {
@@ -247,7 +253,7 @@ const chatReq = (deps: Deps, body: unknown) =>
     new Request('https://api.test/api/chat', {
       method: 'POST',
       headers: { 'content-type': 'application/json', origin: 'https://hmt1501.github.io', 'cf-connecting-ip': '1.2.3.4' },
-      body: JSON.stringify(body),
+      body: JSON.stringify({ groqKey: KEY, ...(body as object) }),
     }),
     deps,
   )
@@ -275,9 +281,8 @@ describe('POST /api/chat', () => {
     expect(system).toContain('checkout mới')
     expect(system).toContain('CVR giảm 0,4 điểm')
     expect(chat.calls[0].messages.at(-1)).toEqual({ role: 'user', content: 'CVR là gì?' })
-    // quota chat tách khỏi quota tạo bài
-    expect(await store.getUsage('2026-10-07', 'chat:global')).toBe(1)
-    expect(await store.getUsage('2026-10-07', 'global')).toBe(0)
+    // chạy bằng key người dùng, không ghi quota
+    expect(store.usage.size).toBe(0)
   })
 
   it('input sai → 400; tin cuối không phải câu hỏi → 400', async () => {
@@ -288,19 +293,17 @@ describe('POST /api/chat', () => {
     expect(chat.calls).toHaveLength(0)
   })
 
-  it('hết lượt theo IP → 429; Groq từ chối → hoàn lượt', async () => {
-    const { deps, store } = setup({ chat: textChat() })
-    expect((await chatReq(deps, question)).status).toBe(200)
-    expect((await chatReq(deps, question)).status).toBe(200)
-    expect((await chatReq(deps, question)).status).toBe(429)
+  it('thiếu key → 401; key hết hạn mức Groq → 429 kèm retry-after', async () => {
+    const { deps, chat } = setup({ chat: textChat() })
+    expect((await chatReq(deps, { ...question, groqKey: null })).status).toBe(401)
+    expect(chat.calls).toHaveLength(0)
 
     const busy: Chat = async () => {
       throw new GroqError(429, 'rate limit', 30)
     }
-    const other = setup({ chat: busy })
-    expect((await chatReq(other.deps, question)).status).toBe(429)
-    expect(await other.store.getUsage('2026-10-07', 'chat:global')).toBe(0)
-    expect(await store.getUsage('2026-10-07', 'chat:global')).toBe(2)
+    const res = await chatReq(setup({ chat: busy }).deps, question)
+    expect(res.status).toBe(429)
+    expect(res.headers.get('retry-after')).toBe('30')
   })
 })
 
@@ -358,6 +361,30 @@ describe('/api/sync', () => {
     expect((await syncReq(deps, 'POST', { body: { progress: progressV2([]) } })).status).toBe(201)
     expect((await syncReq(deps, 'POST', { body: { progress: progressV2([]) } })).status).toBe(201)
     expect((await syncReq(deps, 'POST', { body: { progress: progressV2([]) } })).status).toBe(429)
+  })
+
+  it('key Groq đã mã hóa: GET trả null khi chưa có, PUT lưu/xóa; mã lạ → 404; sai/quá lớn → 400/413', async () => {
+    const { deps } = setup()
+    const { code } = (await (await syncReq(deps, 'POST', { body: { progress: progressV2([]) } })).json()) as { code: string }
+    const putSecret = (c: string, secret: unknown) =>
+      handle(
+        new Request('https://api.test/api/sync/secret', {
+          method: 'PUT',
+          headers: { 'content-type': 'application/json', origin: 'https://hmt1501.github.io', authorization: `Bearer ${c}` },
+          body: JSON.stringify({ secret }),
+        }),
+        deps,
+      )
+    const secretOf = async () => ((await (await syncReq(deps, 'GET', { code })).json()) as { secret: string | null }).secret
+    expect(await secretOf()).toBeNull()
+    expect((await putSecret(code, 'aXYuY2lwaGVy')).status).toBe(200)
+    expect(await secretOf()).toBe('aXYuY2lwaGVy')
+    expect((await putSecret(code, null)).status).toBe(200)
+    expect(await secretOf()).toBeNull()
+    expect((await putSecret('0000-0000-0000-0000', 'x')).status).toBe(404)
+    expect((await putSecret(code, 'x'.repeat(1500))).status).toBe(400)
+    expect((await putSecret(code, 'x'.repeat(3000))).status).toBe(413)
+    expect((await putSecret(code, 42)).status).toBe(400)
   })
 
   it('CORS preflight cho PUT + authorization', async () => {

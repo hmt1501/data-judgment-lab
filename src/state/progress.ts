@@ -19,6 +19,15 @@ export type Progress = {
 }
 
 export const HISTORY_LIMIT = 20
+/** chỉ nhớ N bài Đọc nhanh đọc gần nhất, để tiến độ không vượt giới hạn đồng bộ (SYNC_LIMITS.bytes) */
+export const EXPLAINERS_READ_LIMIT = 50
+
+/** Giữ N bài đọc mới nhất (theo `at`). */
+export function recentReads(read: Progress['explainersRead']): Progress['explainersRead'] {
+  const entries = Object.entries(read)
+  if (entries.length <= EXPLAINERS_READ_LIMIT) return read
+  return Object.fromEntries(entries.sort(([, a], [, b]) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0)).slice(0, EXPLAINERS_READ_LIMIT))
+}
 
 export const emptyProgress = (): Progress => ({
   version: 2,
@@ -65,7 +74,7 @@ export function setLastSection(p: Progress, caseId: string, sectionId: string): 
 
 export function markExplainerRead(p: Progress, slug: string, title: string, now: string): Progress {
   if (p.explainersRead[slug]) return p
-  return { ...p, explainersRead: { ...p.explainersRead, [slug]: { title, at: now } } }
+  return { ...p, explainersRead: recentReads({ ...p.explainersRead, [slug]: { title, at: now } }) }
 }
 
 export function updateSettings(p: Progress, patch: Partial<Progress['settings']>): Progress {
@@ -89,7 +98,7 @@ export function mergeProgress(local: Progress, remote: Progress): Progress {
     saved: [...local.saved, ...remote.saved.filter((id) => !local.saved.includes(id))],
     history: [...latest.values()].sort((a, b) => (a.openedAt < b.openedAt ? 1 : a.openedAt > b.openedAt ? -1 : 0)).slice(0, HISTORY_LIMIT),
     lastSection: { ...remote.lastSection, ...local.lastSection },
-    explainersRead: { ...remote.explainersRead, ...local.explainersRead },
+    explainersRead: recentReads({ ...remote.explainersRead, ...local.explainersRead }),
     settings: { name: local.settings.name.trim() ? local.settings.name : remote.settings.name, theme: local.settings.theme },
   }
 }
@@ -97,15 +106,15 @@ export function mergeProgress(local: Progress, remote: Progress): Progress {
 /** Nhận bản từ thiết bị khác nguyên vẹn, chỉ giữ giao diện sáng/tối của máy này. */
 export const adoptRemote = (local: Progress, remote: Progress): Progress => ({ ...remote, settings: { ...remote.settings, theme: local.settings.theme } })
 
-/** Bỏ các id không còn tồn tại (case bị xóa/đổi tên). */
+/** Bỏ các id không còn tồn tại (case bị xóa/đổi tên). `quizIds` gồm quiz của case và của bài Đọc nhanh soạn sẵn. */
 export function sanitize(p: Progress, caseIds: Set<string>, quizIds: Set<string>): Progress {
   const keep = <T,>(rec: Record<string, T>, ok: Set<string>) =>
     Object.fromEntries(Object.entries(rec).filter(([k]) => ok.has(k)))
   return {
     ...p,
     completed: keep(p.completed, caseIds),
-    // quiz của bài "Đọc nhanh" (id kết thúc "-q", có thể là bài AI không biết trước) luôn được giữ
-    quiz: Object.fromEntries(Object.entries(p.quiz).filter(([k]) => quizIds.has(k) || k.endsWith('-q'))),
+    // quiz bài AI ("<slug>-q", không biết trước) chỉ giữ khi bài còn trong danh sách đã đọc (bị cắt theo EXPLAINERS_READ_LIMIT)
+    quiz: Object.fromEntries(Object.entries(p.quiz).filter(([k]) => quizIds.has(k) || (k.endsWith('-q') && k.slice(0, -2) in p.explainersRead))),
     saved: p.saved.filter((id) => caseIds.has(id)),
     history: p.history.filter((h) => caseIds.has(h.caseId)),
     lastSection: keep(p.lastSection, caseIds),

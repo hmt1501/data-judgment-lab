@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { cases } from '../content'
+import { curatedExplainers } from '../content/explainerLibrary'
 import * as P from './progress'
 import { browserStorage, clearLegacy, loadProgress, parseProgress, saveProgress } from './storage'
 import { useSync, type SyncActions, type SyncInfo } from './useSync'
@@ -17,10 +18,12 @@ type Actions = {
   reset: () => void
 } & SyncActions
 
-const ProgressContext = createContext<{ progress: P.Progress; actions: Actions; sync: SyncInfo } | null>(null)
+/** `groqKey`: key Groq của người dùng (null = chưa nhập → tính năng AI chưa dùng được) */
+const ProgressContext = createContext<{ progress: P.Progress; actions: Actions; sync: SyncInfo; groqKey: string | null } | null>(null)
 
 const knownCases = new Set(cases.map((c) => c.id))
-const knownQuizzes = new Set(cases.flatMap((c) => c.quizzes.map((q) => q.id)))
+// quiz bài Đọc nhanh soạn sẵn có id "<slug>-q"
+const knownQuizzes = new Set([...cases.flatMap((c) => c.quizzes.map((q) => q.id)), ...curatedExplainers.map((e) => `${e.slug}-q`)])
 const now = () => new Date().toISOString()
 const cleanRemote = (raw: unknown) => P.sanitize(parseProgress(raw) ?? P.emptyProgress(), knownCases, knownQuizzes)
 
@@ -31,7 +34,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     saveProgress(browserStorage(), progress)
   }, [progress])
 
-  const { sync, syncActions } = useSync(progress, setProgress, cleanRemote)
+  const { sync, syncActions, groqKey } = useSync(progress, setProgress, cleanRemote)
 
   useEffect(() => clearLegacy(browserStorage()), [])
 
@@ -60,7 +63,7 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
     [syncActions],
   )
 
-  const value = useMemo(() => ({ progress, actions, sync }), [progress, actions, sync])
+  const value = useMemo(() => ({ progress, actions, sync, groqKey }), [progress, actions, sync, groqKey])
   return <ProgressContext.Provider value={value}>{children}</ProgressContext.Provider>
 }
 

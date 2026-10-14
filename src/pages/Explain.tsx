@@ -2,6 +2,7 @@ import { Bot, LoaderCircle, Search, Sparkles, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ExplainerCard } from '../components/explainer/ExplainerCard'
+import { GroqKeyCard } from '../components/sync/GroqKeyCard'
 import { Button, EmptyState, PageHeader, SectionTitle } from '../components/ui/primitives'
 import { useToast } from '../components/ui/Toast'
 import type { ExplainerSummary } from '../../shared/explainer'
@@ -10,6 +11,7 @@ import { curatedExplainers } from '../content/explainerLibrary'
 import { aiEnabled, askAi, describeError, listAiExplainers } from '../lib/api'
 import { searchExplainers } from '../lib/search'
 import { useSearchParamState, useSetSearchParam } from '../lib/useSearchParamState'
+import { useProgress } from '../state/ProgressProvider'
 import styles from './Explain.module.css'
 
 const examples = [
@@ -23,6 +25,7 @@ const stages = ['Đang tra cứu nguồn trên web…', 'Đang đọc và chọn
 
 export function ExplainPage() {
   const toast = useToast()
+  const { groqKey } = useProgress()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const set = useSetSearchParam()
@@ -59,12 +62,12 @@ export function ExplainPage() {
 
   const ask = async (e: FormEvent) => {
     e.preventDefault()
-    if (!aiEnabled || asking || q.trim().length < 8) return
+    if (!aiEnabled || !groqKey || asking || q.trim().length < 8) return
     setAsking(true)
     setStage(0)
     setAskError('')
     try {
-      const { explainer, cached } = await askAi(q.trim())
+      const { explainer, cached } = await askAi(q.trim(), groqKey)
       if (cached) toast('Câu hỏi này đã có bài — mở bài có sẵn.')
       navigate(`/explain/${explainer.slug}`)
     } catch (err) {
@@ -103,7 +106,7 @@ export function ExplainPage() {
           )}
         </label>
         {aiEnabled && (
-          <Button type="submit" variant="primary" disabled={asking || q.trim().length < 8} className={styles.askBtn}>
+          <Button type="submit" variant="primary" disabled={!groqKey || asking || q.trim().length < 8} className={styles.askBtn}>
             {asking ? <LoaderCircle size={18} className={styles.spin} /> : <Sparkles size={18} />}
             {asking ? 'Đang tạo…' : 'Hỏi AI'}
           </Button>
@@ -117,7 +120,9 @@ export function ExplainPage() {
           </p>
         )}
         {askError && <p className={styles.error}>{askError}</p>}
-        {aiEnabled ? (
+        {aiEnabled && !groqKey ? (
+          <GroqKeyCard compact />
+        ) : aiEnabled ? (
           <p className={styles.hint}>Gõ để tìm trong các bài có sẵn. Chưa có bài phù hợp? Bấm “Hỏi AI” — AI sẽ tra cứu web và soạn bài mới, lưu lại cho lần sau.</p>
         ) : (
           <p className={styles.hint}>Tính năng hỏi AI chưa được bật trên bản này; bạn vẫn đọc được toàn bộ bài biên soạn.</p>

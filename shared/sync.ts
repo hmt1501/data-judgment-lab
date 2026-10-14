@@ -5,6 +5,8 @@ export const SYNC_LIMITS = {
   bytes: 65_536,
   /** số ký tự của mã (80 bit = 16 ký tự base32) */
   codeChars: 16,
+  /** key Groq đã mã hóa (base64) */
+  secretChars: 1024,
 } as const
 
 /** Base32 Crockford: bỏ I, L, O, U để không nhầm khi đọc/gõ lại. */
@@ -41,4 +43,4 @@ export function normalizeSyncCode(input: string): string | null {
 export const formatSyncCode = (code: string) => code.match(/.{1,4}/g)?.join('-') ?? code
 
 /** Bản tiến độ trên server; `progress` là JSON không tin cậy, client phải kiểm tra lại. */
-export type SyncPayload = { progress: unknown; rev: number }
+export type SyncPayload = { progress: unknown; rev: number; /** key Groq đã mã hóa bằng mã đồng bộ; null = chưa có */ secret?: string | null }

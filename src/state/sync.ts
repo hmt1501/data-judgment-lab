@@ -19,11 +19,17 @@ const MAX_PUSH_ATTEMPTS = 3
  * - có thay đổi → đẩy lên kèm `rev` đã biết; thiết bị khác đã ghi trước (409) → gộp với bản server rồi đẩy lại.
  *   Ở chế độ `replace` (sau "Xóa tiến độ") không gộp, chỉ lấy `rev` mới rồi ghi đè.
  */
-export async function syncStep(local: Progress, state: SyncState, api: SyncApi, clean: CleanRemote): Promise<{ progress: Progress; state: SyncState }> {
+export async function syncStep(
+  local: Progress,
+  state: SyncState,
+  api: SyncApi,
+  clean: CleanRemote,
+): Promise<{ progress: Progress; state: SyncState; /** key Groq đã mã hóa trên server; undefined = lượt này không kéo về */ secret?: string | null }> {
   if (!state.dirty) {
     const remote = await api.pull(state.code)
-    if (remote.rev === state.rev) return { progress: local, state }
-    return { progress: adoptRemote(local, clean(remote.progress)), state: { ...state, rev: remote.rev } }
+    const secret = remote.secret ?? null
+    if (remote.rev === state.rev) return { progress: local, state, secret }
+    return { progress: adoptRemote(local, clean(remote.progress)), state: { ...state, rev: remote.rev }, secret }
   }
 
   let progress = local
@@ -35,4 +41,27 @@ export async function syncStep(local: Progress, state: SyncState, api: SyncApi, 
     if (!state.replace) progress = mergeProgress(progress, clean(res.remote.progress))
   }
   throw new Error('Tiến độ đang được cập nhật liên tục từ thiết bị khác. Hãy thử lại sau.')
+}
+
+/**
+ * Key Groq gửi lên server đồng bộ ở dạng mã hóa AES-GCM, khóa = SHA-256 của mã đồng bộ (mã có 80 bit ngẫu nhiên).
+ * Server chỉ lưu sha256 khác tiền tố của mã nên không tự giải mã được; ai có mã đồng bộ thì giải mã được.
+ */
+const aesKey = async (code: string) =>
+  crypto.subtle.importKey('raw', await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`djl-groq:${code}`)), 'AES-GCM', false, ['encrypt', 'decrypt'])
+
+export async function encryptSecret(text: string, code: string): Promise<string> {
+  const iv = crypto.getRandomValues(new Uint8Array(12))
+  const data = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, await aesKey(code), new TextEncoder().encode(text)))
+  return btoa(String.fromCharCode(...iv, ...data))
+}
+
+/** undefined nếu chuỗi hỏng hoặc sai mã. */
+export async function decryptSecret(blob: string, code: string): Promise<string | undefined> {
+  try {
+    const bytes = Uint8Array.from(atob(blob), (c) => c.charCodeAt(0))
+    return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes.slice(0, 12) }, await aesKey(code), bytes.slice(12)))
+  } catch {
+    return undefined
+  }
 }

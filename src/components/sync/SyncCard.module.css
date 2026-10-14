@@ -54,6 +54,23 @@
   text-transform: uppercase;
 }
 
+/* ô nhập key Groq (GroqKeyCard) — dùng được cả trong .link lẫn .row */
+.keyInput,
+.link .keyInput {
+  flex: 1;
+  min-width: 12em;
+  height: 44px;
+  padding: 0 var(--sp-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: var(--fs-base);
+  letter-spacing: normal;
+  text-transform: none;
+}
+
 .codeRow {
   display: flex;
   flex-wrap: wrap;

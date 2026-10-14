@@ -11,16 +11,13 @@ export default {
   async fetch(request, env): Promise<Response> {
     return handle(request, {
       store: new D1Store(env.DB),
-      chat: groqChat(env.GROQ_API_KEY),
+      chatFor: (key) => groqChat(key),
       retrieve: (q) => retrieve(q),
       config: {
         allowedOrigins: env.ALLOWED_ORIGINS.split(',').map((s) => s.trim()).filter(Boolean),
-        dailyLimit: Number(env.DAILY_LIMIT) || 20,
-        dailyLimitPerIp: Number(env.DAILY_LIMIT_PER_IP) || 8,
+        dailyLimitPerIp: Number(env.DAILY_LIMIT_PER_IP) || 30,
         model: env.GROQ_MODEL,
         chatModel: env.CHAT_MODEL,
-        chatDailyLimit: Number(env.CHAT_DAILY_LIMIT) || 200,
-        chatDailyLimitPerIp: Number(env.CHAT_DAILY_LIMIT_PER_IP) || 40,
         syncCreateDaily: Number(env.SYNC_CREATE_DAILY) || 500,
         syncCreatePerIp: Number(env.SYNC_CREATE_PER_IP) || 10,
       },

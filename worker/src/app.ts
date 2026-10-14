@@ -1,4 +1,4 @@
-import { parseChatInput } from '../../shared/chat'
+import { isGroqKey, parseChatInput } from '../../shared/chat'
 import { encodeSyncCode, normalizeSyncCode, SYNC_LIMITS } from '../../shared/sync'
 import { isTopicId } from '../../shared/taxonomy'
 import { chatReply } from './chat'
@@ -8,13 +8,11 @@ import type { Store } from './store'
 
 export type Config = {
   allowedOrigins: string[]
-  dailyLimit: number
+  /** số bài AI mỗi IP được tạo mỗi ngày (bài lưu công khai nên vẫn giới hạn, dù chạy bằng key của người dùng) */
   dailyLimitPerIp: number
   model: string
-  /** Hỏi nhanh (bong bóng chat): model nhẹ hơn, quota riêng */
+  /** Hỏi nhanh (bong bóng chat): model nhẹ hơn */
   chatModel: string
-  chatDailyLimit: number
-  chatDailyLimitPerIp: number
   /** giới hạn số mã đồng bộ tạo mới mỗi ngày */
   syncCreateDaily: number
   syncCreatePerIp: number
@@ -22,7 +20,8 @@ export type Config = {
 
 export type Deps = {
   store: Store
-  chat: Chat
+  /** client Groq chạy bằng key của người dùng (máy chủ không có key chung) */
+  chatFor: (groqKey: string) => Chat
   /** tra cứu tư liệu (tin + Wikipedia) có giới hạn kích thước */
   retrieve: (question: string) => Promise<Research>
   config: Config
@@ -32,6 +31,14 @@ export type Deps = {
 }
 
 const MAX_QUESTION = 300
+
+/** Key Groq trong body (không đặt ở header để khỏi lọt vào log request). */
+type KeyCheck = { key: string } | { status: number; code: string; message: string }
+function groqKeyOf(body: unknown): KeyCheck {
+  const v = (body as { groqKey?: unknown } | null)?.groqKey
+  if (v === undefined || v === null || v === '') return { status: 401, code: 'need_key', message: 'Cần nhập key Groq của bạn để dùng AI (Hồ sơ & cài đặt).' }
+  return isGroqKey(v) ? { key: v } : { status: 400, code: 'bad_key', message: 'Key Groq không đúng định dạng (bắt đầu bằng "gsk_").' }
+}
 const RESEARCH_TTL_MS = 6 * 60 * 60 * 1000
 
 export function originAllowed(origin: string | null, allowed: string[]): boolean {
@@ -118,6 +125,8 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
 
     if (request.method === 'POST' && path === '/api/explain') {
       const body = (await request.json().catch(() => null)) as { question?: unknown } | null
+      const groq = groqKeyOf(body)
+      if ('status' in groq) return fail(groq.status, groq.code, groq.message)
       const question = typeof body?.question === 'string' ? body.question.trim().replace(/\s+/g, ' ') : ''
       if (question.length < 8) return fail(400, 'too_short', 'Câu hỏi quá ngắn.')
       if (question.length > MAX_QUESTION) return fail(400, 'too_long', `Câu hỏi tối đa ${MAX_QUESTION} ký tự.`)
@@ -128,9 +137,10 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
 
       const now = deps.now()
       const day = now.toISOString().slice(0, 10)
-      const quota = await reserve(deps.store, day, await ipKey(request), '', config.dailyLimitPerIp, config.dailyLimit)
+      // không có trần chung (mỗi người tự trả bằng key của mình); bộ đếm "global" chỉ để thống kê
+      const quota = await reserve(deps.store, day, await ipKey(request), '', config.dailyLimitPerIp, Number.POSITIVE_INFINITY)
       if (!quota.ok)
-        return fail(429, 'daily_limit', 'Đã hết lượt tạo bài AI hôm nay. Bạn vẫn đọc được các bài có sẵn.', { 'retry-after': String(secondsUntilMidnightUtc(now)) })
+        return fail(429, 'daily_limit', `Mỗi người được tạo tối đa ${config.dailyLimitPerIp} bài AI mỗi ngày. Bạn vẫn đọc được các bài có sẵn.`, { 'retry-after': String(secondsUntilMidnightUtc(now)) })
 
       return await refundIfRejected(quota.refund, async () => {
         let r = await deps.store.getResearch(norm, RESEARCH_TTL_MS, now)
@@ -141,7 +151,7 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
           if (r.sources.length) await deps.store.putResearch(norm, r, now)
           else console.log(JSON.stringify({ event: 'no_sources_fallback', question }))
         }
-        const composed = await compose(deps.chat, config.model, question, r)
+        const composed = await compose(deps.chatFor(groq.key), config.model, question, r)
         const explainer = toExplainer(composed, r, { question, model: config.model, today: day, suffix: deps.randomSuffix() })
         await deps.store.insert(explainer, norm, now)
         console.log(JSON.stringify({ event: 'explainer_created', slug: explainer.slug, sources: explainer.sources.length }))
@@ -150,20 +160,32 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
     }
 
     if (request.method === 'POST' && path === '/api/chat') {
-      const input = parseChatInput(await request.json().catch(() => null))
+      const body: unknown = await request.json().catch(() => null)
+      const groq = groqKeyOf(body)
+      if ('status' in groq) return fail(groq.status, groq.code, groq.message)
+      const input = parseChatInput(body)
       if (typeof input === 'string') return fail(400, 'bad_request', input)
 
-      const now = deps.now()
-      const day = now.toISOString().slice(0, 10)
-      const quota = await reserve(deps.store, day, await ipKey(request), 'chat:', config.chatDailyLimitPerIp, config.chatDailyLimit)
-      if (!quota.ok)
-        return fail(429, 'daily_limit', 'Đã hết lượt hỏi nhanh hôm nay. Hãy thử lại vào ngày mai.', { 'retry-after': String(secondsUntilMidnightUtc(now)) })
+      // không ghi gì vào D1 → không cần quota; hạn mức là của key người dùng
+      const reply = await chatReply(deps.chatFor(groq.key), config.chatModel, input)
+      if (!reply) return fail(502, 'empty_reply', 'AI chưa trả lời được. Hãy hỏi lại theo cách khác.')
+      return json({ reply })
+    }
 
-      return await refundIfRejected(quota.refund, async () => {
-        const reply = await chatReply(deps.chat, config.chatModel, input)
-        if (!reply) return fail(502, 'empty_reply', 'AI chưa trả lời được. Hãy hỏi lại theo cách khác.')
-        return json({ reply })
-      })
+    if (request.method === 'PUT' && path === '/api/sync/secret') {
+      const code = bearerCode(request)
+      if (!code) return fail(400, 'bad_code', 'Mã đồng bộ không đúng định dạng.')
+      const raw = await request.text()
+      if (raw.length > SYNC_LIMITS.secretChars * 2) return fail(413, 'too_large', 'Dữ liệu quá lớn.')
+      let secret: unknown
+      try {
+        secret = (JSON.parse(raw) as { secret?: unknown } | null)?.secret
+      } catch {
+        return fail(400, 'bad_request', 'Dữ liệu không hợp lệ.')
+      }
+      if (secret !== null && (typeof secret !== 'string' || !secret || secret.length > SYNC_LIMITS.secretChars)) return fail(400, 'bad_request', 'Dữ liệu không hợp lệ.')
+      const ok = await deps.store.setSecret(await syncKey(code), secret, deps.now())
+      return ok ? json({ ok: true }, 200, { 'cache-control': 'no-store' }) : fail(404, 'sync_not_found', 'Không tìm thấy mã đồng bộ này. Kiểm tra lại mã.')
     }
 
     if (path === '/api/sync') {
@@ -185,7 +207,7 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
         const noStore = { 'cache-control': 'no-store' }
         const current = await deps.store.getProfile(key)
         if (!current) return fail(404, 'sync_not_found', 'Không tìm thấy mã đồng bộ này. Kiểm tra lại mã.')
-        if (request.method === 'GET') return json({ progress: JSON.parse(current.data), rev: current.rev }, 200, noStore)
+        if (request.method === 'GET') return json({ progress: JSON.parse(current.data), rev: current.rev, secret: current.secret }, 200, noStore)
 
         const body = await readSyncBody(request)
         if ('status' in body) return fail(body.status, 'bad_request', body.message)
@@ -203,9 +225,9 @@ export async function handle(request: Request, deps: Deps): Promise<Response> {
     if (err instanceof PipelineError) return fail(err.code === 'out_of_scope' ? 422 : 502, err.code, err.message)
     if (err instanceof GroqError) {
       if (err.status === 429)
-        return fail(429, 'rate_limited', 'AI đang quá tải (giới hạn miễn phí). Hãy thử lại sau ít phút.', { 'retry-after': String(err.retryAfter ?? 60) })
+        return fail(429, 'rate_limited', 'Key Groq của bạn đã chạm giới hạn lượt dùng. Hãy thử lại sau ít phút.', { 'retry-after': String(err.retryAfter ?? 60) })
+      if (err.status === 401 || err.status === 403) return fail(401, 'user_key_invalid', 'Key Groq không hợp lệ hoặc đã bị thu hồi. Kiểm tra lại trong Hồ sơ & cài đặt.')
       console.log(JSON.stringify({ event: 'groq_error', status: err.status, message: err.message }))
-      if (err.status === 401 || err.status === 403) return fail(503, 'ai_config', 'Máy chủ AI chưa được cấu hình đúng khóa API (GROQ_API_KEY).')
       return fail(502, 'upstream', 'Dịch vụ AI đang lỗi. Hãy thử lại sau.')
     }
     console.log(JSON.stringify({ event: 'unhandled', message: err instanceof Error ? err.message : String(err) }))

@@ -5,6 +5,7 @@ import { CHAT_LIMITS, type ChatTurn } from '../../../shared/chat'
 import { askChat, describeError } from '../../lib/api'
 import { Markdown } from '../../lib/markdown'
 import { useProgress } from '../../state/ProgressProvider'
+import { GroqKeyCard } from '../sync/GroqKeyCard'
 import { Button, cx } from '../ui/primitives'
 import styles from './ChatBubble.module.css'
 import { pageContext, pageTitle, type PageRef } from './pageContext'
@@ -28,7 +29,7 @@ function suggestionsFor(hasQuote: boolean, hasPage: boolean): string[] {
  * Tự gửi kèm ngữ cảnh trang và đoạn văn đang bôi đen trong nội dung chính (#main).
  */
 export function ChatBubble() {
-  const { progress } = useProgress()
+  const { progress, groqKey } = useProgress()
   const last = useMatches().at(-1)
   const page: PageRef = {
     caseId: last?.pathname.startsWith('/case/') ? last.params.id : undefined,
@@ -76,6 +77,7 @@ export function ChatBubble() {
   useEffect(() => () => abortRef.current?.abort(), [])
 
   const request = async (history: Message[], currentQuote: string) => {
+    if (!groqKey) return
     abortRef.current?.abort()
     const ctrl = new AbortController()
     abortRef.current = ctrl
@@ -84,7 +86,7 @@ export function ChatBubble() {
     try {
       const earlier = history.slice(0, -1).map(toTurn)
       const question = history.at(-1)!
-      const reply = await askChat({ messages: [...earlier, { role: 'user', content: question.content }], context, quote: currentQuote || undefined }, ctrl.signal)
+      const reply = await askChat({ messages: [...earlier, { role: 'user', content: question.content }], context, quote: currentQuote || undefined }, groqKey, ctrl.signal)
       setMessages((m) => [...m, { role: 'assistant', content: reply }])
     } catch (err) {
       if (!ctrl.signal.aborted) setError(describeError(err))
@@ -95,7 +97,7 @@ export function ChatBubble() {
 
   const send = (text: string) => {
     const q = text.trim()
-    if (!q || pending) return
+    if (!q || pending || !groqKey) return
     const next: Message[] = [...messages, { role: 'user', content: q, quote: quote || undefined }]
     setMessages(next)
     setInput('')
@@ -165,7 +167,8 @@ export function ChatBubble() {
           )}
 
           <div ref={listRef} className={styles.list} aria-live="polite">
-            {messages.length === 0 && (
+            {!groqKey && <GroqKeyCard compact />}
+            {groqKey && messages.length === 0 && (
               <div className={styles.empty}>
                 <p>Hỏi định nghĩa, công thức hay chỗ chưa hiểu trong bài. Mẹo: bôi đen một đoạn trong bài rồi hỏi — AI sẽ giải thích đúng đoạn đó.</p>
                 <div className={styles.suggestions}>
@@ -219,11 +222,11 @@ export function ChatBubble() {
                 placeholder={quote ? 'Hỏi về đoạn đã chọn…' : 'Nhập câu hỏi (Enter để gửi, Shift+Enter xuống dòng)'}
                 aria-label="Câu hỏi"
               />
-              <button type="submit" className={styles.send} disabled={!input.trim() || pending} aria-label="Gửi">
+              <button type="submit" className={styles.send} disabled={!groqKey || !input.trim() || pending} aria-label="Gửi">
                 <Send size={18} />
               </button>
             </div>
-            <small className={styles.note}>AI có thể sai — hãy đối chiếu với bài học. Số lượt hỏi mỗi ngày có giới hạn.</small>
+            <small className={styles.note}>AI có thể sai — hãy đối chiếu với bài học.</small>
           </form>
         </section>
       )}

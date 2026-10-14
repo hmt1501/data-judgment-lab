@@ -49,18 +49,19 @@ export const listAiExplainers = (opts: { q?: string; topic?: string } = {}) => {
 
 export const getAiExplainer = (slug: string) => request<Explainer>(`/api/explainers/${encodeURIComponent(slug)}`)
 
-export const askAi = (question: string) =>
+// key Groq của người dùng đi trong body (không đặt ở header để khỏi lọt vào log request của Worker)
+export const askAi = (question: string, groqKey: string) =>
   request<{ explainer: Explainer; cached: boolean }>('/api/explain', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ question }),
+    body: JSON.stringify({ question, groqKey }),
   })
 
-export const askChat = (input: ChatInput, signal?: AbortSignal) =>
+export const askChat = (input: ChatInput, groqKey: string, signal?: AbortSignal) =>
   request<ChatReply>('/api/chat', {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ ...input, groqKey }),
     signal,
   }).then((r) => r.reply)
 
@@ -93,6 +94,10 @@ export async function pushSync(code: string, progress: unknown, baseRev: number,
     throw err
   }
 }
+
+/** Lưu key Groq đã mã hóa vào mã đồng bộ (null = xóa). */
+export const putSyncSecret = (code: string, secret: string | null) =>
+  request<{ ok: true }>('/api/sync/secret', { method: 'PUT', headers: syncHeaders(code), body: JSON.stringify({ secret }) })
 
 /** Thông điệp thân thiện, kèm thời gian chờ nếu bị giới hạn. */
 export function describeError(err: unknown): string {

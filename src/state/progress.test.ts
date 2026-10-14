@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { CaseMeta } from '../content/types'
-import { answerQuiz, emptyProgress, HISTORY_LIMIT, markOpened, sanitize, setCompleted, toggleSaved } from './progress'
+import { answerQuiz, emptyProgress, EXPLAINERS_READ_LIMIT, HISTORY_LIMIT, markExplainerRead, markOpened, mergeProgress, sanitize, setCompleted, toggleSaved } from './progress'
 import { inProgress, levelProgress, localDayIndex, recommendNext, skillMastery } from './insights'
 import { loadProgress, saveProgress, STORAGE_KEY } from './storage'
 
@@ -56,11 +56,31 @@ describe('progress reducers', () => {
   it('sanitize bỏ id không tồn tại', () => {
     let p = setCompleted(emptyProgress(), 'gone', true, NOW)
     p = answerQuiz(markOpened(p, 'gone', NOW), 'old-q1', 'a')
-    p = answerQuiz(p, 'some-ai-explainer-q', 'b')
+    p = answerQuiz(markExplainerRead(p, 'some-ai-explainer', 'Bài AI', NOW), 'some-ai-explainer-q', 'b')
+    p = answerQuiz(p, 'forgotten-ai-explainer-q', 'c')
     const clean = sanitize(p, new Set(['a']), new Set(['q1']))
     expect(clean.completed).toEqual({})
+    // quiz bài AI chỉ giữ khi bài còn trong danh sách đã đọc
     expect(clean.quiz).toEqual({ 'some-ai-explainer-q': 'b' })
     expect(clean.history).toEqual([])
+  })
+
+  it('chỉ nhớ EXPLAINERS_READ_LIMIT bài đọc mới nhất (khi đọc, khi gộp, khi nạp dữ liệu cũ)', () => {
+    const at = (i: number) => `2026-10-05T00:00:${String(i % 60).padStart(2, '0')}.${String(i).padStart(3, '0')}Z`
+    let p = emptyProgress()
+    for (let i = 0; i < EXPLAINERS_READ_LIMIT + 10; i++) p = markExplainerRead(p, `e${i}`, `Bài ${i}`, at(i))
+    expect(Object.keys(p.explainersRead)).toHaveLength(EXPLAINERS_READ_LIMIT)
+    expect(p.explainersRead.e0).toBeUndefined()
+    expect(p.explainersRead[`e${EXPLAINERS_READ_LIMIT + 9}`]).toBeDefined()
+
+    let other = emptyProgress()
+    for (let i = 100; i < 100 + EXPLAINERS_READ_LIMIT; i++) other = markExplainerRead(other, `e${i}`, `Bài ${i}`, at(i))
+    expect(Object.keys(mergeProgress(p, other).explainersRead)).toHaveLength(EXPLAINERS_READ_LIMIT)
+
+    const storage = new MemoryStorage()
+    const many = Object.fromEntries(Array.from({ length: 80 }, (_, i) => [`old${i}`, { title: 't', at: at(i) }]))
+    storage.setItem(STORAGE_KEY, JSON.stringify({ ...emptyProgress(), explainersRead: many }))
+    expect(Object.keys(loadProgress(storage).explainersRead)).toHaveLength(EXPLAINERS_READ_LIMIT)
   })
 })
 

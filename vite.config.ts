@@ -31,9 +31,37 @@ function contentMeta(): Plugin {
   }
 }
 
+/**
+ * CSP cho bản build (dev cần script inline của React Refresh nên không áp dụng).
+ * connect-src chỉ cho API → nếu có script lạ (XSS, gói npm bị chèn mã) cũng không gửi được key Groq ra ngoài.
+ */
+function csp(): Plugin {
+  let api = ''
+  return {
+    name: 'csp',
+    apply: 'build',
+    configResolved(c) {
+      api = c.env.VITE_API_BASE ? new URL(c.env.VITE_API_BASE).origin : ''
+    },
+    transformIndexHtml(html) {
+      const policy = [
+        "default-src 'self'",
+        `connect-src 'self' ${api}`.trim(),
+        "img-src 'self' data:",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        'font-src https://fonts.gstatic.com',
+        "object-src 'none'",
+        "base-uri 'none'",
+        "form-action 'none'",
+      ].join('; ')
+      return html.replace('<head>', `<head>\n    <meta http-equiv="Content-Security-Policy" content="${policy}" />`)
+    },
+  }
+}
+
 export default defineConfig({
   base: './',
-  plugins: [contentMeta(), react()],
+  plugins: [contentMeta(), csp(), react()],
   // gói chính ~520 KB (React, router, icon + metadata); thân bài và Recharts là chunk riêng nạp khi cần
   build: { chunkSizeWarningLimit: 600 },
   // worker/ có bộ test riêng (cd worker && npm test)

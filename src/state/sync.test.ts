@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { encodeSyncCode, formatSyncCode, normalizeSyncCode, type SyncPayload } from '../../shared/sync'
 import type { PushResult } from '../lib/api'
 import { answerQuiz, emptyProgress, HISTORY_LIMIT, markOpened, mergeProgress, setCompleted, toggleSaved, updateSettings, type Progress } from './progress'
-import { parseProgress, type SyncState } from './storage'
-import { syncStep, type SyncApi } from './sync'
+import { loadGroqKey, parseProgress, type SyncState } from './storage'
+import { decryptSecret, encryptSecret, syncStep, type SyncApi } from './sync'
 
 const T1 = '2026-10-07T01:00:00.000Z'
 const T2 = '2026-10-07T02:00:00.000Z'
@@ -131,5 +131,36 @@ describe('syncStep', () => {
       push: async () => ({ ok: true, rev: 1 }),
     }
     await expect(syncStep(emptyProgress(), state(), api, clean)).rejects.toThrow('Không tìm thấy')
+  })
+})
+
+describe('key Groq đồng bộ', () => {
+  const code = encodeSyncCode(new Uint8Array(10).fill(7))
+  const key = 'gsk_testkey0123456789abcdef'
+
+  it('mã hóa bằng mã đồng bộ: giải mã đúng với cùng mã; sai mã hoặc chuỗi hỏng → undefined; không lộ key', async () => {
+    const blob = await encryptSecret(key, code)
+    expect(blob).not.toContain('testkey')
+    expect(await encryptSecret(key, code)).not.toBe(blob) // iv ngẫu nhiên
+    expect(await decryptSecret(blob, code)).toBe(key)
+    expect(await decryptSecret(blob, encodeSyncCode(new Uint8Array(10).fill(8)))).toBeUndefined()
+    expect(await decryptSecret('khong-phai-base64!', code)).toBeUndefined()
+  })
+
+  it('syncStep trả `secret` khi kéo về, không trả khi chỉ đẩy lên', async () => {
+    const api: SyncApi = {
+      pull: async () => ({ progress: emptyProgress(), rev: 3, secret: 'enc' }),
+      push: async (): Promise<PushResult> => ({ ok: true, rev: 4 }),
+    }
+    const clean = (raw: unknown) => parseProgress(raw) ?? emptyProgress()
+    expect((await syncStep(emptyProgress(), { code, rev: 3, dirty: false }, api, clean)).secret).toBe('enc')
+    expect((await syncStep(emptyProgress(), { code, rev: 3, dirty: true }, api, clean)).secret).toBeUndefined()
+  })
+
+  it('loadGroqKey bỏ dữ liệu hỏng / key sai định dạng', () => {
+    const store = (v: unknown) => ({ getItem: () => JSON.stringify(v), setItem() {}, removeItem() {}, key: () => null, length: 0 })
+    expect(loadGroqKey(store({ key, dirty: true }))).toEqual({ key, dirty: true })
+    expect(loadGroqKey(store({ key: 'sk-abc', dirty: false }))).toEqual({ key: null, dirty: false })
+    expect(loadGroqKey(store('rác'))).toEqual({ key: null, dirty: false })
   })
 })

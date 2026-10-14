@@ -15,9 +15,11 @@ export interface Store {
   getUsage(day: string, key: string): Promise<number>
   /** đồng bộ tiến độ: `hash` = sha256 của mã, `data` = JSON tiến độ */
   createProfile(hash: string, data: string, now: Date): Promise<void>
-  getProfile(hash: string): Promise<{ data: string; rev: number } | null>
+  getProfile(hash: string): Promise<{ data: string; rev: number; secret: string | null } | null>
   /** cập nhật nếu `rev` hiện tại = `baseRev` (atomic); trả rev mới, null khi lệch phiên bản hoặc không có */
   updateProfile(hash: string, data: string, baseRev: number, now: Date): Promise<number | null>
+  /** key Groq đã mã hóa (null = xóa); trả false nếu không có hồ sơ */
+  setSecret(hash: string, secret: string | null, now: Date): Promise<boolean>
 }
 
 const summary = (e: Explainer): ExplainerSummary => ({
@@ -119,7 +121,7 @@ export class D1Store implements Store {
   }
 
   async getProfile(hash: string) {
-    return this.db.prepare('SELECT data, rev FROM sync_profiles WHERE code_hash = ?').bind(hash).first<{ data: string; rev: number }>()
+    return this.db.prepare('SELECT data, rev, secret FROM sync_profiles WHERE code_hash = ?').bind(hash).first<{ data: string; rev: number; secret: string | null }>()
   }
 
   async updateProfile(hash: string, data: string, baseRev: number, now: Date) {
@@ -128,6 +130,11 @@ export class D1Store implements Store {
       .bind(data, now.toISOString(), hash, baseRev)
       .first<{ rev: number }>()
     return row?.rev ?? null
+  }
+
+  async setSecret(hash: string, secret: string | null, now: Date) {
+    const res = await this.db.prepare('UPDATE sync_profiles SET secret = ?, updated_at = ? WHERE code_hash = ?').bind(secret, now.toISOString(), hash).run()
+    return res.meta.changes > 0
   }
 }
 

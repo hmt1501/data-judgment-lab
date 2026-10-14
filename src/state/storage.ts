@@ -1,4 +1,5 @@
-import { emptyProgress, type HistoryEntry, type Progress, type Theme } from './progress'
+import { isGroqKey } from '../../shared/chat'
+import { emptyProgress, recentReads, type HistoryEntry, type Progress, type Theme } from './progress'
 
 export const STORAGE_KEY = 'djl:v2'
 export const SYNC_KEY = 'djl:sync'
@@ -39,7 +40,7 @@ function fromStored(s: Record<string, unknown>): Progress {
     saved: Array.isArray(s.saved) ? s.saved.filter(isStr) : [],
     history: Array.isArray(s.history) ? s.history.filter(isHistoryEntry) : [],
     lastSection: recordOf(s.lastSection, isStr),
-    explainersRead: recordOf(s.explainersRead, isReadEntry),
+    explainersRead: recentReads(recordOf(s.explainersRead, isReadEntry)),
     settings: {
       name: isStr(settings.name) ? settings.name : base.settings.name,
       theme: THEMES.includes(settings.theme) ? (settings.theme as Theme) : base.settings.theme,
@@ -113,6 +114,26 @@ export function saveSyncState(storage: StorageLike | undefined, s: SyncState | n
   try {
     if (s) storage.setItem(SYNC_KEY, JSON.stringify(s))
     else storage.removeItem(SYNC_KEY)
+  } catch {
+    // bỏ qua
+  }
+}
+
+export const GROQ_KEY = 'djl:groq'
+
+/** Key Groq của người dùng (tách khỏi Progress); `dirty` = đổi trên máy này, chưa đẩy lên mã đồng bộ. */
+export type GroqKeyState = { key: string | null; dirty: boolean }
+
+export function loadGroqKey(storage: StorageLike | undefined): GroqKeyState {
+  const v = storage ? readJson(storage, GROQ_KEY) : undefined
+  return isObj(v) && (v.key === null || isGroqKey(v.key)) && typeof v.dirty === 'boolean' ? { key: v.key, dirty: v.dirty } : { key: null, dirty: false }
+}
+
+export function saveGroqKey(storage: StorageLike | undefined, s: GroqKeyState): void {
+  if (!storage) return
+  try {
+    if (s.key || s.dirty) storage.setItem(GROQ_KEY, JSON.stringify(s))
+    else storage.removeItem(GROQ_KEY)
   } catch {
     // bỏ qua
   }

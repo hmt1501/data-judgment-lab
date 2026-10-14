@@ -1,6 +1,7 @@
 import { ArrowRight, BookOpen, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { GroqKeyCard } from '../components/sync/GroqKeyCard'
 import { SyncCard } from '../components/sync/SyncCard'
 import { Button, Card, EmptyState, PageHeader, ProgressBar, SectionTitle } from '../components/ui/primitives'
 import { useToast } from '../components/ui/Toast'
@@ -114,6 +115,8 @@ export function Profile() {
         <>
           <SectionTitle eyebrow="Đồng bộ" title="Học tiếp trên thiết bị khác" />
           <SyncCard />
+          <SectionTitle eyebrow="AI" title="Key Groq để dùng Hỏi AI" />
+          <GroqKeyCard />
         </>
       )}
 

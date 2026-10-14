@@ -21,6 +21,9 @@ export const CHAT_LIMITS = {
   quoteChars: 800,
 } as const
 
+/** Key Groq của người dùng ("gsk_…"): mọi tính năng AI chạy bằng key này, máy chủ không có key chung. */
+export const isGroqKey = (v: unknown): v is string => typeof v === 'string' && /^gsk_[A-Za-z0-9_-]{16,196}$/.test(v)
+
 const clip = (s: string, max: number) => (s.length > max ? `${s.slice(0, max - 1).trimEnd()}…` : s)
 
 /**
