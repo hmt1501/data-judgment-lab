@@ -79,6 +79,8 @@ export type CaseStudy = {
   title: string
   domain: DomainId
   level: LevelId
+  /** thứ tự học trong cấp độ (số nguyên ≥ 1, duy nhất trong cấp); case không có `order` xếp sau, theo tên */
+  order?: number
   minutes: number
   skills: SkillId[]
   /** câu hỏi kinh doanh người phân tích phải trả lời */

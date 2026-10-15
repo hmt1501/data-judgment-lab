@@ -68,4 +68,5 @@ export const globalRecessionVietnam: Explainer = {
   ],
   origin: 'curated',
   asOf: '2026-10-07',
+  order: 3,
 }

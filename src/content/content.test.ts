@@ -26,6 +26,19 @@ describe('nội dung case', () => {
     expect(await loadCase('khong-co')).toBeUndefined()
   })
 
+  it('order duy nhất trong mỗi cấp độ', () => {
+    const keys = all.filter(([, c]) => c.order !== undefined).map(([, c]) => `${c.level}:${c.order}`)
+    expect(new Set(keys).size).toBe(keys.length)
+  })
+
+  it('cases sắp theo cấp độ, rồi order, case không có order xếp cuối cấp', () => {
+    const ordered = cases.filter((c) => c.level === 'fresher').map((c) => c.order)
+    const firstMissing = ordered.indexOf(undefined)
+    if (firstMissing >= 0) expect(ordered.slice(firstMissing).every((o) => o === undefined)).toBe(true)
+    const nums = ordered.filter((o): o is number => o !== undefined)
+    expect(nums).toEqual([...nums].sort((a, b) => a - b))
+  })
+
   it('id case và id quiz là duy nhất', () => {
     const ids = all.map(([, c]) => c.id)
     expect(new Set(ids).size).toBe(ids.length)

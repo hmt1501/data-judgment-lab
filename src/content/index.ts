@@ -7,9 +7,12 @@ const bodies = import.meta.glob<Record<string, CaseStudy>>('./cases/*.ts')
 
 const levelOrder = new Map<string, number>(levels.map((l, i) => [l.id, i]))
 
-/** Mọi case (không kèm thân bài), sắp theo cấp độ rồi theo tên. */
+/** Mọi case (không kèm thân bài), sắp theo cấp độ, rồi `order` (không có → cuối), rồi tên. */
 export const cases: CaseMeta[] = Object.values(metas).sort(
-  (a, b) => levelOrder.get(a.level)! - levelOrder.get(b.level)! || a.title.localeCompare(b.title, 'vi'),
+  (a, b) =>
+    levelOrder.get(a.level)! - levelOrder.get(b.level)! ||
+    (a.order ?? Infinity) - (b.order ?? Infinity) ||
+    a.title.localeCompare(b.title, 'vi'),
 )
 
 export const caseById = (id: string | undefined) => cases.find((c) => c.id === id)

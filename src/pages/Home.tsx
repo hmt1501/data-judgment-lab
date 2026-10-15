@@ -4,7 +4,7 @@ import { CaseCard } from '../components/CaseCard'
 import { ExplainerCard } from '../components/explainer/ExplainerCard'
 import { ButtonLink, Card, Pill, ProgressBar, ProgressRing, SectionTitle } from '../components/ui/primitives'
 import { cases, caseById } from '../content'
-import { curatedExplainers } from '../content/explainerLibrary'
+import { coreExplainers, weeklyPool, weeklyWindow } from '../content/explainerLibrary'
 import { domainById, levelById, levels } from '../../shared/taxonomy'
 import { inProgress, levelProgress, localDayIndex, quizStats, ratio, recommendNext, skillMastery, trapOfTheDay } from '../state/insights'
 import { inline } from '../lib/markdown'
@@ -27,8 +27,10 @@ export function Home() {
   const perLevel = levelProgress(cases, progress)
   const trap = trapOfTheDay(cases, today)
   // 2 bài đọc nhanh chưa đọc, xoay vòng theo ngày
-  const unread = curatedExplainers.filter((e) => !progress.explainersRead[e.slug])
-  const pool = unread.length ? unread : curatedExplainers
+  const weekly = weeklyWindow(weeklyPool, today)
+  const visible = [...weekly.items, ...coreExplainers]
+  const unread = visible.filter((e) => !progress.explainersRead[e.slug])
+  const pool = unread.length ? unread : visible
   const dayIndex = localDayIndex(today)
   const dailyReads = pool.length ? [0, 1].map((k) => pool[(dayIndex * 2 + k) % pool.length]).filter((e, i, arr) => arr.indexOf(e) === i) : []
   const saved = progress.saved.map(caseById).filter((c) => !!c)

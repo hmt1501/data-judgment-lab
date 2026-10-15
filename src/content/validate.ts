@@ -54,6 +54,7 @@ export function validateCase(c: CaseStudy): string[] {
 
   if (!/^[a-z0-9-]+$/.test(c.id)) at('id phải là kebab-case')
   if (!levelIds.has(c.level)) at(`level lạ "${c.level}"`)
+  if (c.order !== undefined && !(Number.isInteger(c.order) && c.order >= 1)) at('order phải là số nguyên ≥ 1')
   if (!domainIds.has(c.domain)) at(`domain lạ "${c.domain}"`)
   if (c.skills.length < 2) at('cần ≥ 2 kỹ năng')
   c.skills.forEach((s) => skillIds.has(s) || at(`skill lạ "${s}"`))

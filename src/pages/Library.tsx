@@ -1,5 +1,5 @@
 import { Search, SearchX, X } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { CaseCard } from '../components/CaseCard'
 import { Button, EmptyState, PageHeader } from '../components/ui/primitives'
@@ -17,6 +17,8 @@ const statuses = [
   { id: 'done', label: 'Đã học' },
   { id: 'saved', label: 'Đã lưu' },
 ] as const
+
+const PAGE_SIZE = 60
 
 const usedSkills = skills.filter((s) => cases.some((c) => c.skills.includes(s.id)))
 
@@ -45,6 +47,9 @@ export function Library() {
       return true
     })
   }, [q, level, domain, status, skill, progress])
+
+  const [shown, setShown] = useState(PAGE_SIZE)
+  useEffect(() => setShown(PAGE_SIZE), [q, level, domain, status, skill])
 
   const clearAll = () => {
     setQ('')
@@ -116,11 +121,18 @@ export function Library() {
       </div>
 
       {results.length ? (
-        <div className={styles.grid}>
-          {results.map((c) => (
-            <CaseCard key={c.id} c={c} />
-          ))}
-        </div>
+        <>
+          <div className={styles.grid}>
+            {results.slice(0, shown).map((c) => (
+              <CaseCard key={c.id} c={c} />
+            ))}
+          </div>
+          {results.length > shown && (
+            <Button variant="secondary" onClick={() => setShown((n) => n + PAGE_SIZE)}>
+              Hiện thêm ({results.length - shown} case)
+            </Button>
+          )}
+        </>
       ) : (
         <EmptyState
           icon={<SearchX size={22} />}

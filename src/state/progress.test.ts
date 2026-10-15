@@ -65,8 +65,16 @@ describe('progress reducers', () => {
     expect(clean.history).toEqual([])
   })
 
+  const at = (i: number) => `2026-10-05T00:00:${String(i % 60).padStart(2, '0')}.${String(i).padStart(3, '0')}Z`
+
+  it('bài nền tảng không bị cắt khi đọc nhiều bài khác', () => {
+    let p = markExplainerRead(emptyProgress(), 'how-to-read-cpi', 'CPI', at(0))
+    for (let i = 1; i <= EXPLAINERS_READ_LIMIT + 5; i++) p = markExplainerRead(p, `e${i}`, `Bài ${i}`, at(i))
+    expect(p.explainersRead['how-to-read-cpi']).toBeDefined()
+    expect(Object.keys(p.explainersRead)).toHaveLength(EXPLAINERS_READ_LIMIT + 1)
+  })
+
   it('chỉ nhớ EXPLAINERS_READ_LIMIT bài đọc mới nhất (khi đọc, khi gộp, khi nạp dữ liệu cũ)', () => {
-    const at = (i: number) => `2026-10-05T00:00:${String(i % 60).padStart(2, '0')}.${String(i).padStart(3, '0')}Z`
     let p = emptyProgress()
     for (let i = 0; i < EXPLAINERS_READ_LIMIT + 10; i++) p = markExplainerRead(p, `e${i}`, `Bài ${i}`, at(i))
     expect(Object.keys(p.explainersRead)).toHaveLength(EXPLAINERS_READ_LIMIT)

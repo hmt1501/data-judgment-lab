@@ -2,7 +2,7 @@ import { Activity, Compass, LayoutDashboard, Library, Menu, Newspaper, Search, U
 import { useEffect, useState } from 'react'
 import { NavLink, Outlet, useLocation, useMatches } from 'react-router-dom'
 import { cases } from '../content'
-import { curatedExplainers } from '../content/explainerLibrary'
+import { visibleExplainers } from '../content/explainerLibrary'
 import { aiEnabled } from '../lib/api'
 import { useProgress } from '../state/ProgressProvider'
 import { ChatBubble } from '../components/chat/ChatBubble'
@@ -13,7 +13,7 @@ import styles from './AppShell.module.css'
 const nav = [
   { to: '/', label: 'Tổng quan', icon: LayoutDashboard, end: true },
   { to: '/library', label: 'Thư viện case', icon: Library, badge: String(cases.length) },
-  { to: '/explain', label: 'Đọc nhanh', icon: Newspaper, badge: String(curatedExplainers.length) },
+  { to: '/explain', label: 'Đọc nhanh', icon: Newspaper, badge: String(visibleExplainers(new Date()).length) },
   { to: '/path', label: 'Lộ trình năng lực', icon: Compass },
   { to: '/profile', label: 'Hồ sơ & cài đặt', icon: UserRound },
 ]

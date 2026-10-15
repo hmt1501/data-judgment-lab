@@ -47,6 +47,10 @@ export const skills = [
   { id: 'monetization', name: 'Monetization', group: 'Kinh doanh' },
   { id: 'operations', name: 'Vận hành & SLA', group: 'Kinh doanh' },
   { id: 'credit-risk', name: 'Rủi ro tín dụng', group: 'Kinh doanh' },
+  { id: 'financial-statements', name: 'Đọc báo cáo tài chính', group: 'Kinh doanh' },
+  { id: 'cash-flow', name: 'Dòng tiền & vốn lưu động', group: 'Kinh doanh' },
+  { id: 'revenue-recognition', name: 'Ghi nhận doanh thu & chi phí', group: 'Kinh doanh' },
+  { id: 'portfolio-risk', name: 'Danh mục & rủi ro đầu tư', group: 'Kinh doanh' },
   { id: 'macro', name: 'Kinh tế vĩ mô', group: 'Kinh tế' },
   { id: 'valuation', name: 'Giá & định giá', group: 'Kinh tế' },
   { id: 'liquidity', name: 'Thanh khoản & cung cầu', group: 'Kinh tế' },
@@ -65,6 +69,8 @@ export const domains = [
   { id: 'real-estate', name: 'Bất động sản', glyph: '🏘️' },
   { id: 'logistics', name: 'Logistics & vận hành', glyph: '🚚' },
   { id: 'lending', name: 'Tài chính tiêu dùng', glyph: '💳' },
+  { id: 'securities', name: 'Chứng khoán', glyph: '📊' },
+  { id: 'accounting', name: 'Kế toán', glyph: '🧾' },
 ] as const
 
 export type DomainId = (typeof domains)[number]['id']

@@ -62,8 +62,8 @@ function csp(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [contentMeta(), csp(), react()],
-  // gói chính ~520 KB (React, router, icon + metadata); thân bài và Recharts là chunk riêng nạp khi cần
-  build: { chunkSizeWarningLimit: 600 },
+  // gói chính ~610 KB với 78 case (React, router, icon + metadata ~2 KB/case); thân bài và Recharts là chunk riêng nạp khi cần
+  build: { chunkSizeWarningLimit: 1000 },
   // worker/ có bộ test riêng (cd worker && npm test)
   test: { include: ['src/**/*.test.ts'] },
 })

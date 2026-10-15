@@ -1,3 +1,5 @@
+import { CORE_EXPLAINER_SLUGS } from '../../shared/explainer'
+
 export type Theme = 'system' | 'light' | 'dark'
 
 export type HistoryEntry = { caseId: string; openedAt: string }
@@ -19,14 +21,16 @@ export type Progress = {
 }
 
 export const HISTORY_LIMIT = 20
-/** chỉ nhớ N bài Đọc nhanh đọc gần nhất, để tiến độ không vượt giới hạn đồng bộ (SYNC_LIMITS.bytes) */
+/** chỉ nhớ N bài Đọc nhanh (ngoài nhóm nền tảng) đọc gần nhất, để tiến độ không vượt giới hạn đồng bộ (SYNC_LIMITS.bytes) */
 export const EXPLAINERS_READ_LIMIT = 50
 
-/** Giữ N bài đọc mới nhất (theo `at`). */
+/** Giữ N bài đọc mới nhất (theo `at`); bài nền tảng luôn được giữ để bài xoay theo tuần không đẩy chúng ra. */
 export function recentReads(read: Progress['explainersRead']): Progress['explainersRead'] {
-  const entries = Object.entries(read)
-  if (entries.length <= EXPLAINERS_READ_LIMIT) return read
-  return Object.fromEntries(entries.sort(([, a], [, b]) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0)).slice(0, EXPLAINERS_READ_LIMIT))
+  const core = new Set(CORE_EXPLAINER_SLUGS)
+  const rest = Object.entries(read).filter(([slug]) => !core.has(slug))
+  if (rest.length <= EXPLAINERS_READ_LIMIT) return read
+  const keep = new Set(rest.sort(([, a], [, b]) => (a.at < b.at ? 1 : a.at > b.at ? -1 : 0)).slice(0, EXPLAINERS_READ_LIMIT).map(([slug]) => slug))
+  return Object.fromEntries(Object.entries(read).filter(([slug]) => core.has(slug) || keep.has(slug)))
 }
 
 export const emptyProgress = (): Progress => ({

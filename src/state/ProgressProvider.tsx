@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
 import { cases } from '../content'
-import { curatedExplainers } from '../content/explainerLibrary'
+import { coreExplainers } from '../content/explainerLibrary'
 import * as P from './progress'
 import { browserStorage, clearLegacy, loadProgress, parseProgress, saveProgress } from './storage'
 import { useSync, type SyncActions, type SyncInfo } from './useSync'
@@ -22,8 +22,8 @@ type Actions = {
 const ProgressContext = createContext<{ progress: P.Progress; actions: Actions; sync: SyncInfo; groqKey: string | null } | null>(null)
 
 const knownCases = new Set(cases.map((c) => c.id))
-// quiz bài Đọc nhanh soạn sẵn có id "<slug>-q"
-const knownQuizzes = new Set([...cases.flatMap((c) => c.quizzes.map((q) => q.id)), ...curatedExplainers.map((e) => `${e.slug}-q`)])
+// quiz bài nền tảng có id "<slug>-q"; bài xoay theo tuần xử lý như bài AI (chỉ giữ khi còn trong explainersRead)
+const knownQuizzes = new Set([...cases.flatMap((c) => c.quizzes.map((q) => q.id)), ...coreExplainers.map((e) => `${e.slug}-q`)])
 const now = () => new Date().toISOString()
 const cleanRemote = (raw: unknown) => P.sanitize(parseProgress(raw) ?? P.emptyProgress(), knownCases, knownQuizzes)
 

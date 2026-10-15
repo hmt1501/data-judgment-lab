@@ -3,14 +3,15 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ExplainerCard } from '../components/explainer/ExplainerCard'
 import { GroqKeyCard } from '../components/sync/GroqKeyCard'
-import { Button, EmptyState, PageHeader, SectionTitle } from '../components/ui/primitives'
+import { Button, Card, EmptyState, PageHeader, SectionTitle } from '../components/ui/primitives'
 import { useToast } from '../components/ui/Toast'
 import type { ExplainerSummary } from '../../shared/explainer'
 import { isTopicId, topics } from '../../shared/taxonomy'
-import { curatedExplainers } from '../content/explainerLibrary'
+import { coreExplainers, weeklyPool, weeklyWindow } from '../content/explainerLibrary'
 import { aiEnabled, askAi, describeError, listAiExplainers } from '../lib/api'
 import { searchExplainers } from '../lib/search'
 import { useSearchParamState, useSetSearchParam } from '../lib/useSearchParamState'
+import { useToday } from '../lib/useToday'
 import { useProgress } from '../state/ProgressProvider'
 import styles from './Explain.module.css'
 
@@ -57,7 +58,11 @@ export function ExplainPage() {
     return () => window.clearInterval(t)
   }, [asking])
 
-  const curated = useMemo(() => searchExplainers(curatedExplainers.filter((e) => !topic || e.topic === topic), q), [q, topic])
+  const today = useToday()
+  const weekly = useMemo(() => weeklyWindow(weeklyPool, today), [today])
+  const match = (items: ExplainerSummary[]) => searchExplainers(items.filter((e) => !topic || e.topic === topic), q)
+  const latest = useMemo(() => match(weekly.items), [weekly, q, topic])
+  const foundation = useMemo(() => match(coreExplainers), [q, topic])
   const ai = useMemo(() => (aiItems ? searchExplainers(aiItems, q) : []), [aiItems, q])
 
   const ask = async (e: FormEvent) => {
@@ -77,7 +82,7 @@ export function ExplainPage() {
     }
   }
 
-  const hasMatches = curated.length + ai.length > 0
+  const hasMatches = latest.length + foundation.length + ai.length > 0
 
   return (
     <div>
@@ -158,11 +163,26 @@ export function ExplainPage() {
         />
       )}
 
-      {curated.length > 0 && (
+      {weekly.exhausted && (
+        <Card>Bạn đã xem hết các bài học trong chương trình. Bài mới sẽ được bổ sung sau; trong lúc chờ, bạn có thể hỏi AI.</Card>
+      )}
+
+      {latest.length > 0 && (
         <>
-          <SectionTitle eyebrow="Biên soạn sẵn" title={`${curated.length} bài`} />
+          <SectionTitle eyebrow="Mới nhất" title={`${latest.length} bài tuần này`} />
           <div className={styles.grid}>
-            {curated.map((e) => (
+            {latest.map((e) => (
+              <ExplainerCard key={e.slug} e={e} />
+            ))}
+          </div>
+        </>
+      )}
+
+      {foundation.length > 0 && (
+        <>
+          <SectionTitle eyebrow="Nền tảng" title={`${foundation.length} bài`} />
+          <div className={styles.grid}>
+            {foundation.map((e) => (
               <ExplainerCard key={e.slug} e={e} />
             ))}
           </div>

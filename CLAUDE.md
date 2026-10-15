@@ -1,9 +1,11 @@
 # CLAUDE.md — Data Judgment Lab
+
 App học phân tích dữ liệu tiếng Việt (React + Vite, GitHub Pages) + API "Hỏi AI" (Cloudflare Worker + D1 + Groq).
 Đọc [docs/codemap.md](docs/codemap.md) (cấu trúc + nguyên tắc kiến trúc) trước khi sửa code, [docs/design.md](docs/design.md) trước khi sửa UI.
-Trước khi báo "xong": `npm test && npm run typecheck && npm run build`; `cd worker && npm test && npm run typecheck`.
+Trước khi báo "xong": `npm test && npm run typecheck && npm run build`; `cd worker && npm test && npm run typecheck` và tự động mở bản cho tôi test.
 
 ## Quy tắc file (BẮT BUỘC)
+
 - Root chỉ chứa: CLAUDE.md, README.md, config. KHÔNG tạo .md mới ở root.
 - Tài liệu chỉ nằm trong docs/. Trước khi tạo file doc mới: kiểm tra đã có file phù hợp chưa, có thì cập nhật file đó.
 - Không tạo bản copy (*-v2, *-new, *-backup). Sửa trực tiếp, git lo lịch sử.
@@ -12,6 +14,7 @@ Trước khi báo "xong": `npm test && npm run typecheck && npm run build`; `cd 
 - Không bao giờ commit bí mật: GROQ_API_KEY, .dev.vars, .secrets*.
 
 ## Bản đồ tài liệu
+
 - docs/codemap.md – cấu trúc code, nguyên tắc kiến trúc, luồng chính, bẫy đã biết
 - docs/design.md – design system (tokens, component, bố cục)
 - worker/README.md – API Worker, cài đặt & deploy

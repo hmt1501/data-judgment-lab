@@ -2,7 +2,7 @@ import { CheckCircle2, CornerDownLeft, Search } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { cases } from '../content'
-import { curatedExplainers } from '../content/explainerLibrary'
+import { visibleExplainers } from '../content/explainerLibrary'
 import { domainById, levelById, skillById, topicById } from '../../shared/taxonomy'
 import { searchCases, searchExplainers } from '../lib/search'
 import { useProgress } from '../state/ProgressProvider'
@@ -26,7 +26,7 @@ export function CommandPalette({ onClose }: { onClose: () => void }) {
       detail: `Case · ${levelById(c.level).name} · ${c.skills.map((s) => skillById(s).name).join(', ')}`,
       done: !!progress.completed[c.id],
     }))
-    const explainerResults = searchExplainers(curatedExplainers, query).map((e) => ({
+    const explainerResults = searchExplainers(visibleExplainers(new Date()), query).map((e) => ({
       id: `exp-${e.slug}`,
       href: `/explain/${e.slug}`,
       glyph: topicById(e.topic).glyph,

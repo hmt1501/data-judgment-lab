@@ -107,8 +107,8 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 
 | Việc | File |
 |---|---|
-| Thêm case | `src/content/cases/<id>.ts` (mẫu: `revenue-checkout.ts`) → `npm test` |
-| Thêm bài Đọc nhanh | `src/content/explainers/<slug>.ts`, `id = slug`, `quiz.id = <slug>-q`, `origin: 'curated'` |
+| Thêm case | `src/content/cases/<id>.ts` (mẫu: `revenue-checkout.ts`) → `npm test`. `order` (tùy chọn) = thứ tự học trong cấp, duy nhất trong cấp; Path/Thư viện/gợi ý bài tiếp theo xếp theo cấp → `order` → tên |
+| Thêm bài Đọc nhanh | `src/content/explainers/<slug>.ts`, `id = slug`, `quiz.id = <slug>-q`, `origin: 'curated'`. Bài "mới nhất" xoay theo tuần: thêm `order` = số kế tiếp (1..N liền mạch, test kiểm tra). Bài nền tảng: slug nằm trong `CORE_EXPLAINER_SLUGS` (`shared/explainer.ts`), không có `order` |
 | Thêm kỹ năng/lĩnh vực/chủ đề | `shared/taxonomy.ts` (topic mới ảnh hưởng cả prompt + schema AI) |
 | Thêm loại block | `src/content/types.ts` → `Block.tsx` → `validate.ts` (nếu có ràng buộc) → `docs/design.md` |
 | Đổi luật bài AI | `shared/explainer.ts` (`EXPLAINER_LIMITS`, validate) + `worker/src/prompts.ts` cho khớp |
@@ -119,7 +119,9 @@ scripts/draft-case.ts ── dùng shared/ + worker/src/{groq,retrieve} để so
 
 ## Bẫy đã biết / nợ kỹ thuật
 
-- Nội dung được tách: plugin `contentMeta` trong `vite.config.ts` biến `cases/<id>.ts?meta` / `explainers/<slug>.ts?meta` thành phần nhẹ (`caseMetaOf`, `explainerSummaryOf`) nạp sẵn; thân bài là chunk riêng (import động) nạp khi mở (`loadCase`, `loadCurated`). `index-*.js` ~520 KB (từng 1.337 KB). Cần metadata mới cho thư viện/thống kê → thêm vào `caseMetaOf`, không đọc `sections` ở nơi khác. Plugin dùng `node:module.stripTypeScriptTypes` (Node ≥ 22.13, in cảnh báo experimental khi build) nên file nội dung chỉ được có `import type`.
+- Trang Đọc nhanh = 15 bài nền tảng + 3 bài "mới nhất" + bài AI. Kho tuần hiện có 200 bài (`order` 1–200) → hết sau 67 tuần, tức từ thứ Hai 31/1/2028 trang giữ 3 bài cuối và hiện thông báo; muốn kéo dài thì thêm bài với `order` 201+. `weeklyWindow` (`explainerLibrary.ts`) đổi cả 3 bài mỗi thứ Hai theo giờ máy từ `WEEKLY_START` (19/10/2026); hết kho thì giữ 3 bài cuối và Explain hiện thông báo đã xem hết. Đổi `WEEKLY_START` hoặc `order` là dịch lịch của mọi người. Bài tuần cũ vẫn mở được qua link (`curatedBySlug` giữ toàn bộ) nhưng không còn trong danh sách/tìm kiếm. Quiz bài tuần xử lý như bài AI (không vào `knownQuizzes`); `recentReads` không cắt bài nền tảng.
+
+- Nội dung được tách: plugin `contentMeta` trong `vite.config.ts` biến `cases/<id>.ts?meta` / `explainers/<slug>.ts?meta` thành phần nhẹ (`caseMetaOf`, `explainerSummaryOf`) nạp sẵn; thân bài là chunk riêng (import động) nạp khi mở (`loadCase`, `loadCurated`). `index-*.js` ~880 KB với 108 case và 215 bài Đọc nhanh (từng 1.337 KB; ngưỡng cảnh báo 1.000 KB; mỗi case thêm ~2,3 KB, mỗi bài ~1 KB chưa nén — còn dư chỗ cho ~50 case trước khi chạm ngưỡng). Cần metadata mới cho thư viện/thống kê → thêm vào `caseMetaOf`, không đọc `sections` ở nơi khác. Plugin dùng `node:module.stripTypeScriptTypes` (Node ≥ 22.13, in cảnh báo experimental khi build) nên file nội dung chỉ được có `import type`.
 - Trần bài AI mỗi IP tính theo **lượt gọi AI** (kể cả khi AI trả nội dung sai chuẩn), chỉ hoàn lượt khi Groq từ chối request. Bộ đếm ngày theo UTC (reset 7h sáng giờ VN).
 - `explainersRead` chỉ giữ `EXPLAINERS_READ_LIMIT` (50) bài đọc gần nhất để tiến độ không vượt 64 KB; quiz `<slug>-q` của bài AI bị cắt cũng bị bỏ (`sanitize`).
 - Key Groq: ai có mã đồng bộ thì giải mã được key. CSP (`connect-src` chỉ cho API) chặn script lạ gửi key ra ngoài; thêm nguồn ngoài mới (font, ảnh, API) phải sửa plugin `csp` trong `vite.config.ts`.

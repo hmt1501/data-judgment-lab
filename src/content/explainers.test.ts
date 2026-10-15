@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
-import { explainerSummaryOf, validateExplainer, type Explainer } from '../../shared/explainer'
-import { curatedExplainers, loadCurated } from './explainerLibrary'
+import { CORE_EXPLAINER_SLUGS, explainerSummaryOf, validateExplainer, type Explainer } from '../../shared/explainer'
+import { curatedExplainers, loadCurated, weeklyPool, weeklyWindow } from './explainerLibrary'
 
 const modules = import.meta.glob<Record<string, Explainer>>('./explainers/*.ts', { eager: true })
 const all = Object.entries(modules).map(([path, mod]) => {
@@ -30,6 +30,37 @@ describe('explainer soạn sẵn', () => {
   it('slug duy nhất', () => {
     const slugs = all.map(([, e]) => e.slug)
     expect(new Set(slugs).size).toBe(slugs.length)
+  })
+})
+
+describe('nhóm nền tảng và kho xoay theo tuần', () => {
+  it('đủ 15 bài nền tảng, không có order; bài còn lại có order duy nhất, liền mạch từ 1', () => {
+    const slugs = new Set(all.map(([, e]) => e.slug))
+    expect(CORE_EXPLAINER_SLUGS).toHaveLength(15)
+    for (const s of CORE_EXPLAINER_SLUGS) expect(slugs.has(s), s).toBe(true)
+    const [core, rest] = [all.filter(([, e]) => CORE_EXPLAINER_SLUGS.includes(e.slug)), all.filter(([, e]) => !CORE_EXPLAINER_SLUGS.includes(e.slug))]
+    for (const [, e] of core) expect(e.order, e.slug).toBeUndefined()
+    expect(rest.map(([, e]) => e.order).sort((a, b) => a! - b!)).toEqual(rest.map((_, i) => i + 1))
+    expect(weeklyPool.map((e) => e.order)).toEqual(rest.map((_, i) => i + 1))
+  })
+
+  const pool = Array.from({ length: 8 }, (_, i) => ({ slug: `b${i + 1}` }) as never)
+  const start = new Date(2026, 9, 19)
+  const slugsAt = (y: number, m: number, d: number) => weeklyWindow(pool, new Date(y, m, d, 15), start).items.map((e) => (e as { slug: string }).slug)
+
+  it('đổi cả 3 bài vào mỗi thứ Hai; trước mốc vẫn là tuần đầu', () => {
+    expect(slugsAt(2026, 9, 12)).toEqual(['b1', 'b2', 'b3'])
+    expect(slugsAt(2026, 9, 25)).toEqual(['b1', 'b2', 'b3'])
+    expect(slugsAt(2026, 9, 26)).toEqual(['b4', 'b5', 'b6'])
+  })
+
+  it('hết kho: giữ 3 bài cuối và báo exhausted', () => {
+    expect(weeklyWindow(pool, new Date(2026, 10, 2), start)).toMatchObject({ exhausted: false })
+    expect(slugsAt(2026, 10, 2)).toEqual(['b7', 'b8'])
+    const done = weeklyWindow(pool, new Date(2026, 10, 9), start)
+    expect(done.exhausted).toBe(true)
+    expect(done.items.map((e) => (e as { slug: string }).slug)).toEqual(['b6', 'b7', 'b8'])
+    expect(weeklyWindow([], new Date(2030, 0, 1), start)).toEqual({ items: [], exhausted: false })
   })
 })
 

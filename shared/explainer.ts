@@ -33,13 +33,15 @@ export type Explainer = {
   origin: 'curated' | 'ai'
   /** ngày dữ liệu/bối cảnh được cập nhật, YYYY-MM-DD */
   asOf: string
+  /** vị trí trong kho "mới nhất" xoay theo tuần (1..N, duy nhất); bài nền tảng (`CORE_EXPLAINER_SLUGS`) không có */
+  order?: number
   model?: string
 }
 
 /** Dạng rút gọn cho danh sách (API `GET /api/explainers`, thẻ bài). */
-export type ExplainerSummary = Pick<Explainer, 'slug' | 'question' | 'title' | 'topic' | 'tldr' | 'origin' | 'asOf'>
+export type ExplainerSummary = Pick<Explainer, 'slug' | 'question' | 'title' | 'topic' | 'tldr' | 'origin' | 'asOf' | 'order'>
 
-export const explainerSummaryOf = ({ slug, question, title, topic, tldr, origin, asOf }: Explainer): ExplainerSummary => ({
+export const explainerSummaryOf = ({ slug, question, title, topic, tldr, origin, asOf, order }: Explainer): ExplainerSummary => ({
   slug,
   question,
   title,
@@ -47,7 +49,27 @@ export const explainerSummaryOf = ({ slug, question, title, topic, tldr, origin,
   tldr,
   origin,
   asOf,
+  ...(order !== undefined && { order }),
 })
+
+/** 15 bài nền tảng cố định của trang Đọc nhanh; mọi bài soạn sẵn khác thuộc kho xoay theo tuần (có `order`). */
+export const CORE_EXPLAINER_SLUGS: readonly string[] = [
+  'how-to-read-cpi',
+  'how-to-read-gdp',
+  'compound-interest-dca',
+  'real-interest-rate-savings',
+  'usd-vnd-exchange-rate',
+  'sbv-policy-tools',
+  'pe-valuation',
+  'etf-and-mutual-funds',
+  'emergency-fund-asset-allocation',
+  'real-estate-cycle',
+  'mortgage-rates-credit',
+  'public-debt-government-bonds',
+  'corporate-bonds-risk',
+  'fed-rate-hike-vietnam',
+  'gold-price-sjc-vs-world',
+]
 
 export const EXPLAINER_LIMITS = {
   keyPoints: [3, 5],
